@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetAF\NetAF.csproj" />
+    <ProjectReference Include="..\NetAF.Imaging\NetAF.Imaging.csproj" />
   </ItemGroup>
 
 </Project>
