@@ -46,7 +46,7 @@ jobs:
         sed -i "s/<FileVersion>.*<\/FileVersion>/<FileVersion>${{ inputs.ver }}<\/FileVersion>/" NetAF.Imaging/NetAF.Imaging.csproj
 
         # update the .csproj file with the release notes
-        sed -i "s/<PackageReleaseNotes>.*<\/PackageReleaseNotes>/<PackageReleaseNotes>${{ inputs.release-notes }}<\/PackageReleaseNotes>/" NetAF/NetAF.csproj
+        sed -i "s/<PackageReleaseNotes>.*<\/PackageReleaseNotes>/<PackageReleaseNotes>${{ inputs.release-notes }}<\/PackageReleaseNotes>/" NetAF.Imaging/NetAF.Imaging.csproj
 
     - name: Build
       run: dotnet build -c Release
