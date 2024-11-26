@@ -4,6 +4,21 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>NetAF.Imaging</AssemblyName>
+    <Authors>BenPollard</Authors>
+    <Copyright />
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/benpollarduk/netaf.imaging.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/benpollarduk/netaf.imaging</PackageProjectUrl>
+    <Description>An extension to the NetAF library to add imaging capabilities. For examples see the project website at https://github.com/benpollarduk/netaf.imaging.</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.0.0</Version>
+    <AssemblyVersion>0.0.0.0</AssemblyVersion>
+    <FileVersion>0.0.0.0</FileVersion>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <Title>$(AssemblyName)</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
