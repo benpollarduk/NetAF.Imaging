@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetAF.Imaging", "NetAF.Imag
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetAF.Imaging.Tests", "NetAF.Imaging.Tests\NetAF.Imaging.Tests.csproj", "{82C46E9C-9DDB-4102-A23C-9B89391C1BE8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{94DD7DB7-B5A1-4AA1-85AB-4A4D3ED842D8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{82C46E9C-9DDB-4102-A23C-9B89391C1BE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82C46E9C-9DDB-4102-A23C-9B89391C1BE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82C46E9C-9DDB-4102-A23C-9B89391C1BE8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{94DD7DB7-B5A1-4AA1-85AB-4A4D3ED842D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{94DD7DB7-B5A1-4AA1-85AB-4A4D3ED842D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{94DD7DB7-B5A1-4AA1-85AB-4A4D3ED842D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{94DD7DB7-B5A1-4AA1-85AB-4A4D3ED842D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
