@@ -1,7 +1,7 @@
 <div align="center">
 
 # NetAF.Imaging
-NetAF.Imaging extension to add simple imaging capabilities to NetAF.
+Extension to add simple imaging capabilities to NetAF.
 
 ![icon](.nuget/Icon.bmp)
 
@@ -20,7 +20,7 @@ NetAF.Imaging extension to add simple imaging capabilities to NetAF.
 </div>
 
 ## Overview
-NetAF.Imaging extension to add simple imaging capabilities to [NetAF](https://github.com/benpollarduk/NetAF).
+NetAF.Imaging provides extensions to [NetAF](https://github.com/benpollarduk/NetAF) to add simple functions to convert images to visuals.
 
 ## Getting Started
 
