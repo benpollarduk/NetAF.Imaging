@@ -54,7 +54,7 @@ var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", disp
 ```
 
 ## Documentation
-Please visit [https://benpollarduk.github.io/NetAF-docs/docs/imaging.html](https://benpollarduk.github.io/NetAF-docs/docs/imaging.html) to view the NetAF.Imaging documentation.
+Please visit [https://benpollarduk.github.io/NetAF-docs/docs/visuals.html](https://benpollarduk.github.io/NetAF-docs/docs/visuals.html) to view the NetAF.Imaging documentation.
 
 ## For Open Questions
 Visit https://github.com/benpollarduk/NetAF.Imaging/issues
