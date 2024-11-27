@@ -56,6 +56,19 @@ var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", disp
 game.ChangeMode(new VisualMode(frame));
 ```
 
+Here is a simple room that contains a command to look at the view.
+```csharp
+return new Room("Hillside", "A wild hillside with a lone tree", commands:
+[
+    new CustomCommand(new CommandHelp("Look at view", "Look at the current view."), true, true, (game, args) =>
+    {
+        var frame = new GridVisualFrame(VisualHelper.FromImage(imagePath, game.Configuration.DisplaySize, new CellSize(8, 12)));
+        game.ChangeMode(new VisualMode(frame));
+        return new(ReactionResult.GameModeChanged, string.Empty);
+    })
+ ]);
+```
+
 ## Documentation
 Please visit [https://benpollarduk.github.io/NetAF-docs/](https://benpollarduk.github.io/NetAF-docs/) to view the NetAF documentation.
 
