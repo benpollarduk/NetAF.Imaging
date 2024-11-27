@@ -80,7 +80,7 @@ The generated visual:
 ![image](https://github.com/user-attachments/assets/dce66e97-43de-49f3-93fe-9be370b83de3)
 
 ## Documentation
-Please visit [https://benpollarduk.github.io/NetAF-docs/docs/imaging.html](https://benpollarduk.github.io/NetAF-docs/docs/imaging.html) to view the NetAF.Imaging documentation.
+Please visit [https://benpollarduk.github.io/NetAF-docs/docs/visuals.html](https://benpollarduk.github.io/NetAF-docs/docs/visuals.html) to view the NetAF.Imaging documentation.
 
 ## For Open Questions
 Visit https://github.com/benpollarduk/NetAF.Imaging/issues
