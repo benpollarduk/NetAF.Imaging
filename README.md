@@ -44,14 +44,14 @@ var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", disp
 adapter.RenderFrame(frame);
 ```
 
-The rendered visual:
+The generated visual:
 
-![image](https://github.com/user-attachments/assets/92575c55-ffd4-4802-81af-b68c206b4e10)
+![image](https://github.com/user-attachments/assets/a7044930-b87c-4dd6-af2a-da5985e29a3a)
 
 This can be used in a game:
 
 ```csharp
-var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, fontSize));
+var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console));
 game.ChangeMode(new VisualMode(frame));
 ```
 
@@ -61,12 +61,23 @@ return new Room("Hillside", "A wild hillside with a lone tree", commands:
 [
     new CustomCommand(new CommandHelp("Look at view", "Look at the current view."), true, true, (game, args) =>
     {
-        var frame = new GridVisualFrame(VisualHelper.FromImage(imagePath, game.Configuration.DisplaySize, CellAspectRatio.Console));
+        var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", game.Configuration.DisplaySize, CellAspectRatio.Console));
         game.ChangeMode(new VisualMode(frame));
         return new(ReactionResult.GameModeChanged, string.Empty);
     })
  ]);
 ```
+
+### Applying Textures
+A texturizer can be applied to add extra depth to the image:
+
+```csharp
+var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console, new BrightnessTexturizer()));
+```
+
+The generated visual:
+
+![image](https://github.com/user-attachments/assets/dce66e97-43de-49f3-93fe-9be370b83de3)
 
 ## Documentation
 Please visit [https://benpollarduk.github.io/NetAF-docs/](https://benpollarduk.github.io/NetAF-docs/) to view the NetAF documentation.
