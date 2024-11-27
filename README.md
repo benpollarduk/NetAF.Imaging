@@ -34,7 +34,7 @@ Or add the NuGet package:
 dotnet add package NetAF.Imaging
 ```
 
-### Example
+### Hello World
 Generating visuals is made easy with the *VisualHelper* class. The following example generates a visual on the console:
 ```csharp
 var displaySize = new Size(80, 50);
