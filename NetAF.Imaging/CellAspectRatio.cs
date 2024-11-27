@@ -1,18 +1,23 @@
 ﻿namespace NetAF.Imaging
 {
     /// <summary>
-    /// Represents the size of a cell.
+    /// Represents the aspect ratio of a cell.
     /// </summary>
     /// <param name="width">The width of the cell.</param>
     /// <param name="height">The height of the cell.</param>
-    public readonly struct CellSize(double width, double height)
+    public readonly struct CellAspectRatio(double width, double height)
     {
         #region StaticProperties
 
         /// <summary>
         /// Get the default value for a square cell.
         /// </summary>
-        public static CellSize Square { get; } = new CellSize(1, 1);
+        public static CellAspectRatio Square { get; } = new CellAspectRatio(1, 1);
+
+        /// <summary>
+        /// Get the default value for a console cell.
+        /// </summary>
+        public static CellAspectRatio Console { get; } = new CellAspectRatio(0.55, 1);
 
         #endregion
 

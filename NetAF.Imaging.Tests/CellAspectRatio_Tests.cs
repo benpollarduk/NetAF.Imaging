@@ -1,12 +1,12 @@
 namespace NetAF.Imaging.Tests
 {
     [TestClass]
-    public class CellSize_Tests
+    public class CellAspectRatio_Tests
     {
         [TestMethod]
         public void GivenWidth1Height1_WhenGetWidthRatio_Then1()
         {
-            var cell = new CellSize(1, 1);
+            var cell = new CellAspectRatio(1, 1);
 
             var result = cell.WidthRatio;
 
@@ -16,7 +16,7 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenWidth1Height1_WhenGetHeightRatio_Then1()
         {
-            var cell = new CellSize(1, 1);
+            var cell = new CellAspectRatio(1, 1);
 
             var result = cell.HeightRatio;
 
@@ -26,7 +26,7 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenWidth1Height2_WhenGetWidthRatio_Then0P5()
         {
-            var cell = new CellSize(1, 2);
+            var cell = new CellAspectRatio(1, 2);
 
             var result = cell.WidthRatio;
 
@@ -36,7 +36,7 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenWidth2Height1_WhenGetHeightRatio_Then0P5()
         {
-            var cell = new CellSize(2, 1);
+            var cell = new CellAspectRatio(2, 1);
 
             var result = cell.HeightRatio;
 

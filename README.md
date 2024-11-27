@@ -38,10 +38,9 @@ dotnet add package NetAF.Imaging
 Generating visuals is made easy with the *VisualHelper* class. The following example generates a visual on the console:
 ```csharp
 var displaySize = new Size(80, 50);
-var fontSize = new CellSize(8, 12);
 var adapter = new SystemConsoleAdapter();
 
-var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, fontSize));
+var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console));
 adapter.RenderFrame(frame);
 ```
 
@@ -62,7 +61,7 @@ return new Room("Hillside", "A wild hillside with a lone tree", commands:
 [
     new CustomCommand(new CommandHelp("Look at view", "Look at the current view."), true, true, (game, args) =>
     {
-        var frame = new GridVisualFrame(VisualHelper.FromImage(imagePath, game.Configuration.DisplaySize, new CellSize(8, 12)));
+        var frame = new GridVisualFrame(VisualHelper.FromImage(imagePath, game.Configuration.DisplaySize, CellAspectRatio.Console));
         game.ChangeMode(new VisualMode(frame));
         return new(ReactionResult.GameModeChanged, string.Empty);
     })
