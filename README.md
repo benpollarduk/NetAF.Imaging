@@ -20,7 +20,44 @@ NetAF.Imaging extension to add simple imaging capabilities to NetAF.
 </div>
 
 ## Overview
-NetAF.Imaging extension to add simple imaging capabilities to NetAF.
+NetAF.Imaging extension to add simple imaging capabilities to [NetAF](https://github.com/benpollarduk/NetAF).
+
+## Getting Started
+
+### Clone the repo/pull NuGet
+Clone the repo:
+```bash
+git clone https://github.com/benpollarduk/netaf.imaging.git
+```
+Or add the NuGet package:
+```bash
+dotnet add package NetAF.Imaging
+```
+
+### Example
+Generating visuals is made easy with the *VisualHelper* class. The following example generates a visual on the console:
+```csharp
+var displaySize = new Size(80, 50);
+var fontSize = new CellSize(8, 12);
+var adapter = new SystemConsoleAdapter();
+
+var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, fontSize));
+adapter.RenderFrame(frame);
+```
+
+The rendered visual:
+
+![image](https://github.com/user-attachments/assets/92575c55-ffd4-4802-81af-b68c206b4e10)
+
+This can be used in a game:
+
+```csharp
+var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, fontSize));
+game.ChangeMode(new VisualMode(frame));
+```
+
+## Documentation
+Please visit [https://benpollarduk.github.io/NetAF-docs/](https://benpollarduk.github.io/NetAF-docs/) to view the NetAF documentation.
 
 ## For Open Questions
 Visit https://github.com/benpollarduk/NetAF.Imaging/issues
