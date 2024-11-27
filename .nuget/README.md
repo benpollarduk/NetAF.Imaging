@@ -1,8 +1,8 @@
 # NetAF.Imaging
-NetAF.Imaging extension to add simple imaging capabilities to NetAF.
+Extension to add simple imaging capabilities to NetAF.
 
 ## Overview
-NetAF.Imaging extension to add simple imaging capabilities to [NetAF](https://github.com/benpollarduk/NetAF).
+NetAF.Imaging provides extensions to [NetAF](https://github.com/benpollarduk/NetAF) to add simple functions to convert images to visuals.
 
 ## Getting Started
 
