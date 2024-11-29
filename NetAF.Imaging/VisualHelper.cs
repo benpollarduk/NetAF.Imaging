@@ -36,7 +36,19 @@ namespace NetAF.Imaging
         public static GridVisualBuilder FromImage(string path, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
         {
             using var image = Image.Load<Rgba32>(path);
+            return FromImage(image, targetSize, cellAspectRatio, texturizer);
+        }
 
+        /// <summary>
+        /// Create a new GridVisualBuilder from an image.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="targetSize">The target size of the GridVisualBuilder.</param>
+        /// <param name="cellAspectRatio">The aspect ratio of the cells used to display the image. For square cells use CellAspectRatio.Square.</param>
+        /// <param name="texturizer">The texturizer to use for providing texture.</param>
+        /// <returns>An approximation of the image as a GridVisualBuilder.</returns>
+        private static GridVisualBuilder FromImage(Image<Rgba32> image, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
+        {
             // the ratio of the cells used to display the pixels may not be square, image may need to be adjusted to accommodate this.
             // when it is rendered the natural stretching of the target will correct this
             Assets.Size ratioCorrectedTargetSize = new((int)(targetSize.Width * cellAspectRatio.HeightRatio), (int)(targetSize.Height * cellAspectRatio.WidthRatio));
@@ -64,7 +76,7 @@ namespace NetAF.Imaging
                     var normalisedAlpha = 1d / byte.MaxValue * pixel.A;
                     var background = new AnsiColor((byte)(pixel.R * normalisedAlpha), (byte)(pixel.G * normalisedAlpha), (byte)(pixel.B * normalisedAlpha));
                     builder.SetCell(x, y, background);
-                    
+
                     // apply texture
                     builder.SetCell(x, y, texturizer.GetTextureCharacter(background), texturizer.GetHighlightColor(background));
                 }

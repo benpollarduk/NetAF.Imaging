@@ -7,11 +7,11 @@ namespace NetAF.Imaging.Tests
     public class VisualHelper_Tests
     {
         [TestMethod]
-        public void GivenWhiteImage_WhenCreateFrame_ThenFrameIsNotNull()
+        public void GivenWhiteImageAsPath_WhenCreateFrame_ThenFrameIsNotNull()
         {
-            var path = "Resources/FullWhite.bmp";
+            var path = "Images/FullWhite.bmp";
 
-            var result = VisualHelper.CreateFrame(path, new(5, 5), CellAspectRatio.Square, new BrightnessTexturizer());
+            var result = VisualHelper.CreateFrame(path, new(5, 5), CellAspectRatio.Square);
 
             Assert.IsNotNull(result);
         }
@@ -19,7 +19,7 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenWhiteImage_WhenFromImage_ThenImageIsBrightWhite()
         {
-            var path = "Resources/FullWhite.bmp";
+            var path = "Images/FullWhite.bmp";
             var frame = VisualHelper.FromImage(path, new(5, 5), CellAspectRatio.Square);
 
             var result = frame.GetCellBackgroundColor(0, 0);
@@ -30,7 +30,7 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenBlackImage_WhenFromImage_ThenImageIsBlack()
         {
-            var path = "Resources/FullBlack.bmp";
+            var path = "Images/FullBlack.bmp";
             var frame = VisualHelper.FromImage(path, new(5, 5), CellAspectRatio.Square);
             
             var result = frame.GetCellBackgroundColor(0, 0);
@@ -41,7 +41,7 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenCellWidth1To2AndImage5x5_WhenFromImage_ThenReturnedHeightIs2()
         {
-            var path = "Resources/FullWhite.bmp";
+            var path = "Images/FullWhite.bmp";
             var frame = VisualHelper.FromImage(path, new(5, 5), new CellAspectRatio(1, 2));
 
             var result = frame.DisplaySize.Height;
@@ -52,7 +52,7 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenCellWidth2To1AndImage5x5_WhenFromImage_ThenReturnedWidthIs2()
         {
-            var path = "Resources/FullWhite.bmp";
+            var path = "Images/FullWhite.bmp";
             var frame = VisualHelper.FromImage(path, new(5, 5), new CellAspectRatio(2, 1));
 
             var result = frame.DisplaySize.Width;
@@ -63,7 +63,7 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenFullBlackAndBrightnessTexturizer_WhenFromImage_ThenTextureCharacterApplied()
         {
-            var path = "Resources/FullBlack.bmp";
+            var path = "Images/FullBlack.bmp";
             var frame = VisualHelper.FromImage(path, new(5, 5), new CellAspectRatio(2, 1), new BrightnessTexturizer());
 
             var result = frame.GetCharacter(0, 0);
