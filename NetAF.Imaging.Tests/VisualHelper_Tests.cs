@@ -7,6 +7,16 @@ namespace NetAF.Imaging.Tests
     public class VisualHelper_Tests
     {
         [TestMethod]
+        public void GivenWhiteImage_WhenCreateFrame_ThenFrameIsNotNull()
+        {
+            var path = "Resources/FullWhite.bmp";
+
+            var result = VisualHelper.CreateFrame(path, new(5, 5), CellAspectRatio.Square, new BrightnessTexturizer());
+
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
         public void GivenWhiteImage_WhenFromImage_ThenImageIsBrightWhite()
         {
             var path = "Resources/FullWhite.bmp";

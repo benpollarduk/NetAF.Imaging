@@ -40,7 +40,7 @@ Generating visuals is made easy with the *VisualHelper* class. The following exa
 var displaySize = new Size(80, 50);
 var adapter = new SystemConsoleAdapter();
 
-var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console));
+var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console);
 adapter.RenderFrame(frame);
 ```
 
@@ -51,7 +51,7 @@ The generated visual:
 This can be used in a game:
 
 ```csharp
-var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console));
+var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console);
 game.ChangeMode(new VisualMode(frame));
 ```
 
@@ -61,7 +61,7 @@ return new Room("Hillside", "A wild hillside with a lone tree", commands:
 [
     new CustomCommand(new CommandHelp("Look at view", "Look at the current view."), true, true, (game, args) =>
     {
-        var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", game.Configuration.DisplaySize, CellAspectRatio.Console));
+        var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", game.Configuration.DisplaySize, CellAspectRatio.Console);
         game.ChangeMode(new VisualMode(frame));
         return new(ReactionResult.GameModeChanged, string.Empty);
     })
@@ -72,7 +72,7 @@ return new Room("Hillside", "A wild hillside with a lone tree", commands:
 A texturizer can be applied to add extra depth to the image:
 
 ```csharp
-var frame = new GridVisualFrame(VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console, new BrightnessTexturizer()));
+var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console, new BrightnessTexturizer());
 ```
 
 The generated visual:
