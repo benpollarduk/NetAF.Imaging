@@ -1,5 +1,5 @@
 using NetAF.Imaging.Textures;
-using NetAF.Rendering.Console;
+using NetAF.Targets.Console.Rendering;
 
 namespace NetAF.Imaging.Tests
 {

@@ -1,5 +1,5 @@
 ﻿using NetAF.Imaging.Textures;
-using NetAF.Rendering.Console;
+using NetAF.Targets.Console.Rendering;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;

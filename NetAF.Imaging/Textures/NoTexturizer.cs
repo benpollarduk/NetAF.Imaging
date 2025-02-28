@@ -1,4 +1,4 @@
-﻿using NetAF.Rendering.Console;
+﻿using NetAF.Targets.Console.Rendering;
 
 namespace NetAF.Imaging.Textures
 {
