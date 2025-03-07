@@ -19,23 +19,25 @@ namespace NetAF.Imaging
         /// <param name="path">The path to the image.</param>
         /// <param name="targetSize">The target size of the GridVisualBuilder.</param>
         /// <param name="cellAspectRatio">The aspect ratio of the cells used to display the image. For square cells use CellAspectRatio.Square.</param>
-        /// <returns>An approximation of the image as a GridVisualBuilder.</returns>
-        public static GridVisualBuilder FromImage(string path, Assets.Size targetSize, CellAspectRatio cellAspectRatio)
-        {
-            return FromImage(path, targetSize, cellAspectRatio, new NoTexturizer());
-        }
-
-        /// <summary>
-        /// Create a new GridVisualBuilder from an image.
-        /// </summary>
-        /// <param name="path">The path to the image.</param>
-        /// <param name="targetSize">The target size of the GridVisualBuilder.</param>
-        /// <param name="cellAspectRatio">The aspect ratio of the cells used to display the image. For square cells use CellAspectRatio.Square.</param>
         /// <param name="texturizer">The texturizer to use for providing texture.</param>
         /// <returns>An approximation of the image as a GridVisualBuilder.</returns>
         public static GridVisualBuilder FromImage(string path, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
         {
             using var image = Image.Load<Rgba32>(path);
+            return FromImage(image, targetSize, cellAspectRatio, texturizer);
+        }
+
+        /// <summary>
+        /// Create a new GridVisualBuilder from a a stream.
+        /// </summary>
+        /// <param name="stream">A stream containing the image.</param>
+        /// <param name="targetSize">The target size of the GridVisualBuilder.</param>
+        /// <param name="cellAspectRatio">The aspect ratio of the cells used to display the image. For square cells use CellAspectRatio.Square.</param>
+        /// <param name="texturizer">The texturizer to use for providing texture.</param>
+        /// <returns>An approximation of the image as a GridVisualBuilder.</returns>
+        public static GridVisualBuilder FromImage(Stream stream, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
+        {
+            using var image = Image.Load<Rgba32>(stream);
             return FromImage(image, targetSize, cellAspectRatio, texturizer);
         }
 
@@ -91,23 +93,24 @@ namespace NetAF.Imaging
         /// <param name="path">The path to the image.</param>
         /// <param name="targetSize">The target size of the GridVisualFrame.</param>
         /// <param name="cellAspectRatio">The aspect ratio of the cells used to display the image. For square cells use CellAspectRatio.Square.</param>
-        /// <returns>An approximation of the image as a GridVisualFrame.</returns>
-        public static GridVisualFrame CreateFrame(string path, Assets.Size targetSize, CellAspectRatio cellAspectRatio)
-        {
-            return CreateFrame(path, targetSize, cellAspectRatio, new NoTexturizer());
-        }
-
-        /// <summary>
-        /// Create a new GridVisualFrame from an image.
-        /// </summary>
-        /// <param name="path">The path to the image.</param>
-        /// <param name="targetSize">The target size of the GridVisualFrame.</param>
-        /// <param name="cellAspectRatio">The aspect ratio of the cells used to display the image. For square cells use CellAspectRatio.Square.</param>
         /// <param name="texturizer">The texturizer to use for providing texture.</param>
         /// <returns>An approximation of the image as a GridVisualFrame.</returns>
         public static GridVisualFrame CreateFrame(string path, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
         {
             return new GridVisualFrame(FromImage(path, targetSize, cellAspectRatio, texturizer));
+        }
+
+        /// <summary>
+        /// Create a new GridVisualFrame from a stream.
+        /// </summary>
+        /// <param name="stream">The stream containing the image.</param>
+        /// <param name="targetSize">The target size of the GridVisualFrame.</param>
+        /// <param name="cellAspectRatio">The aspect ratio of the cells used to display the image. For square cells use CellAspectRatio.Square.</param>
+        /// <param name="texturizer">The texturizer to use for providing texture.</param>
+        /// <returns>An approximation of the image as a GridVisualFrame.</returns>
+        public static GridVisualFrame CreateFrame(Stream stream, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
+        {
+            return new GridVisualFrame(FromImage(stream, targetSize, cellAspectRatio, texturizer));
         }
 
         #endregion;
