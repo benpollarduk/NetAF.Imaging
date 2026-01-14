@@ -1,4 +1,5 @@
-﻿using NetAF.Targets.Console.Rendering;
+﻿using NetAF.Imaging.Extensions;
+using NetAF.Targets.Console.Rendering;
 
 namespace NetAF.Imaging.Textures
 {
@@ -49,27 +50,7 @@ namespace NetAF.Imaging.Textures
             var g = color.G + highlightStrength;
             var b = color.B + highlightStrength;
 
-            return new AnsiColor(ClampToByte(r), ClampToByte(g), ClampToByte(b));
-        }
-
-        #endregion
-
-        #region StaticMethods
-
-        /// <summary>
-        /// Clamp an integer value to a byte value.
-        /// </summary>
-        /// <param name="value">The value to clamp.</param>
-        /// <returns>The clamped value.</returns>
-        internal static byte ClampToByte(int value)
-        {
-            if (value < byte.MinValue)
-                return byte.MinValue;
-
-            if (value > byte.MaxValue)
-                return byte.MaxValue;
-
-            return (byte)value;
+            return new AnsiColor(r.ClampToByte(),  g.ClampToByte(), b.ClampToByte());
         }
 
         #endregion

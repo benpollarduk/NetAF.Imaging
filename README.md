@@ -50,7 +50,7 @@ The original image:
 
 The generated visual:
 
-<img width="718" height="438" alt="image" src="https://github.com/user-attachments/assets/c65f8976-e53d-45e8-acf7-ea3e0af5681c" />
+<img width="713" height="436" alt="image" src="https://github.com/user-attachments/assets/c65f8976-e53d-45e8-acf7-ea3e0af5681c" />
 
 This can be used in a game:
 
@@ -83,6 +83,19 @@ The generated visual:
 
 <img width="713" height="436" alt="image" src="https://github.com/user-attachments/assets/79ce7110-0339-4507-9f28-96861c986128" />
 
+## Testing
+Outside of a game, images can be generated and displayed on a console application:
+
+```csharp
+var pathToSourceImage = "TestImage.bmp";
+var fileBytes = File.ReadAllBytes(pathToSourceImage);
+var stream = new MemoryStream(fileBytes);
+
+var frame = VisualHelper.CreateFrame(stream, new Size(80, 40), CellAspectRatio.Console, new BrightnessTexturizer());
+
+var adapter = new ConsoleAdapter();
+adapter.RenderFrame(frame);
+```
 
 ## Documentation
 Please visit [https://benpollarduk.github.io/NetAF-docs/docs/visuals.html](https://benpollarduk.github.io/NetAF-docs/docs/visuals.html) to view the NetAF.Imaging documentation.

@@ -27,7 +27,7 @@ namespace NetAF.Imaging.Tests
         }
 
         [TestMethod]
-        public void GivenBlackAndHightlightOf10_WhenGetHighlightColor_ThenHighlight10BrighterOnAllChannels()
+        public void GivenBlackAndHighlightOf10_WhenGetHighlightColor_ThenHighlight10BrighterOnAllChannels()
         {
             var brightnessTexturizer = new BrightnessTexturizer("#.", 10);
 
@@ -36,30 +36,6 @@ namespace NetAF.Imaging.Tests
             Assert.AreEqual(10, result.R);
             Assert.AreEqual(10, result.G);
             Assert.AreEqual(10, result.B);
-        }
-
-        [TestMethod]
-        public void Given127_WhenClampToByte_ThenReturn127()
-        {
-            var result = BrightnessTexturizer.ClampToByte(127);
-
-            Assert.AreEqual(127, result);
-        }
-
-        [TestMethod]
-        public void GivenMinus1_WhenClampToByte_ThenReturn0()
-        {
-            var result = BrightnessTexturizer.ClampToByte(-1);
-
-            Assert.AreEqual(0, result);
-        }
-
-        [TestMethod]
-        public void Given256_WhenClampToByte_ThenReturn255()
-        {
-            var result = BrightnessTexturizer.ClampToByte(256);
-
-            Assert.AreEqual(255, result);
         }
     }
 }

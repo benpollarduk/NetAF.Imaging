@@ -9,13 +9,11 @@ namespace NetAF.Imaging.TestConsole
         static void Main(string[] args)
         {
             var path = "Tree.jpg";
-
             var fileBytes = File.ReadAllBytes(path);
             var stream = new MemoryStream(fileBytes);
-
-            var frame = VisualHelper.CreateFrame(stream, new Size(80, 40), CellAspectRatio.Console, new BrightnessTexturizer());
-
             var adapter = new ConsoleAdapter();
+            var frame = VisualHelper.CreateFrame(stream, new Size(80, 40), CellAspectRatio.Console, new NoTexturizer());
+            
             adapter.RenderFrame(frame);
 
             Console.ReadLine();
