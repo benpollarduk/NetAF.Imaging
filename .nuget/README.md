@@ -53,6 +53,20 @@ A texturizer can be applied to add extra depth to the image:
 var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console, new BrightnessTexturizer());
 ```
 
+## Testing
+Outside of a game, images can be generated and displayed on a console application:
+
+```csharp
+var pathToSourceImage = "TestImage.bmp";
+var fileBytes = File.ReadAllBytes(pathToSourceImage);
+var stream = new MemoryStream(fileBytes);
+
+var frame = VisualHelper.CreateFrame(stream, new Size(80, 40), CellAspectRatio.Console, new BrightnessTexturizer());
+
+var adapter = new ConsoleAdapter();
+adapter.RenderFrame(frame);
+```
+
 ## Documentation
 Please visit [https://benpollarduk.github.io/NetAF-docs/docs/visuals.html](https://benpollarduk.github.io/NetAF-docs/docs/visuals.html) to view the NetAF.Imaging documentation.
 
