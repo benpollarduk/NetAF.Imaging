@@ -1,4 +1,5 @@
-﻿using NetAF.Imaging.Textures;
+﻿using NetAF.Assets;
+using NetAF.Imaging.Textures;
 using NetAF.Targets.Console;
 
 namespace NetAF.Imaging.TestConsole
@@ -12,7 +13,7 @@ namespace NetAF.Imaging.TestConsole
             var fileBytes = File.ReadAllBytes(path);
             var stream = new MemoryStream(fileBytes);
 
-            var frame = VisualHelper.CreateFrame(stream, new(80, 25), CellAspectRatio.Square, new BrightnessTexturizer());
+            var frame = VisualHelper.CreateFrame(stream, new Size(80, 40), CellAspectRatio.Console, new BrightnessTexturizer());
 
             var adapter = new ConsoleAdapter();
             adapter.RenderFrame(frame);
