@@ -82,5 +82,17 @@ namespace NetAF.Imaging.Tests
 
             Assert.IsNotNull(result);
         }
+
+        [TestMethod]
+        public void GivenTreeAsStream_WhenCreateFrame_ThenFrameIsNotNull()
+        {
+            var path = "Images/Tree.jpg";
+            var fileBytes = File.ReadAllBytes(path);
+            var stream = new MemoryStream(fileBytes);
+
+            var result = VisualHelper.CreateFrame(stream, new(5, 5), CellAspectRatio.Square, new NoTexturizer());
+
+            Assert.IsNotNull(result);
+        }
     }
 }
