@@ -38,7 +38,7 @@ dotnet add package NetAF.Imaging
 Generating visuals is made easy with the *VisualHelper* class. The following example generates a visual on the console:
 ```csharp
 var displaySize = new Size(80, 50);
-var adapter = new SystemConsoleAdapter();
+var adapter = new ConsoleAdapter();
 
 var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console);
 adapter.RenderFrame(frame);
@@ -82,20 +82,6 @@ var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspec
 The generated visual:
 
 <img width="713" height="436" alt="image" src="https://github.com/user-attachments/assets/79ce7110-0339-4507-9f28-96861c986128" />
-
-## Testing
-Outside of a game, images can be generated and displayed on a console application:
-
-```csharp
-var pathToSourceImage = "TestImage.bmp";
-var fileBytes = File.ReadAllBytes(pathToSourceImage);
-var stream = new MemoryStream(fileBytes);
-
-var frame = VisualHelper.CreateFrame(stream, new Size(80, 40), CellAspectRatio.Console, new BrightnessTexturizer());
-
-var adapter = new ConsoleAdapter();
-adapter.RenderFrame(frame);
-```
 
 ## Documentation
 Please visit [https://benpollarduk.github.io/NetAF-docs/docs/visuals.html](https://benpollarduk.github.io/NetAF-docs/docs/visuals.html) to view the NetAF.Imaging documentation.
