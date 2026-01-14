@@ -44,9 +44,13 @@ var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspec
 adapter.RenderFrame(frame);
 ```
 
+The original image:
+
+![image](/NetAF.Imaging.TestConsole/Tree.jpg)
+
 The generated visual:
 
-![image](https://github.com/user-attachments/assets/a7044930-b87c-4dd6-af2a-da5985e29a3a)
+<img width="718" height="438" alt="image" src="https://github.com/user-attachments/assets/c65f8976-e53d-45e8-acf7-ea3e0af5681c" />
 
 This can be used in a game:
 
@@ -77,7 +81,8 @@ var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspec
 
 The generated visual:
 
-![image](https://github.com/user-attachments/assets/dce66e97-43de-49f3-93fe-9be370b83de3)
+<img width="713" height="436" alt="image" src="https://github.com/user-attachments/assets/79ce7110-0339-4507-9f28-96861c986128" />
+
 
 ## Documentation
 Please visit [https://benpollarduk.github.io/NetAF-docs/docs/visuals.html](https://benpollarduk.github.io/NetAF-docs/docs/visuals.html) to view the NetAF.Imaging documentation.
