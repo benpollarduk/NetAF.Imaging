@@ -55,8 +55,9 @@ The generated visual:
 This can be used in a game:
 
 ```csharp
-var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console);
-game.ChangeMode(new VisualMode(frame));
+var visualBuilder = VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console);
+var visual = new Visual("Test image", "A test image", visualBuilder);
+game.ChangeMode(new VisualMode(visual));
 ```
 
 Here is a simple room that contains a command to look at the view.
@@ -65,8 +66,9 @@ return new Room("Hillside", "A wild hillside with a lone tree", commands:
 [
     new CustomCommand(new CommandHelp("Look at view", "Look at the current view."), true, true, (game, args) =>
     {
-        var frame = VisualHelper.CreateFrame(@"C:\TestImage.jpg", game.Configuration.DisplaySize, CellAspectRatio.Console);
-        game.ChangeMode(new VisualMode(frame));
+        var visualBuilder = VisualHelper.FromImage(@"C:\TestImage.jpg", displaySize, CellAspectRatio.Console);
+        var visual = new Visual("Test image", "A test image", visualBuilder);
+        game.ChangeMode(new VisualMode(visual));
         return new(ReactionResult.GameModeChanged, string.Empty);
     })
  ]);
