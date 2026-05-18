@@ -1,8 +1,6 @@
 ﻿using NetAF.Imaging.Textures;
 using NetAF.Targets.Console.Rendering;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 
 namespace NetAF.Imaging
 {
@@ -23,8 +21,8 @@ namespace NetAF.Imaging
         /// <returns>An approximation of the image as a GridVisualBuilder.</returns>
         public static GridVisualBuilder FromImage(string path, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
         {
-            using var image = Image.Load<Rgba32>(path);
-            return FromImage(image, targetSize, cellAspectRatio, texturizer);
+            using var bitmap = SKBitmap.Decode(path);
+            return FromImage(bitmap, targetSize, cellAspectRatio, texturizer);
         }
 
         /// <summary>
@@ -37,8 +35,8 @@ namespace NetAF.Imaging
         /// <returns>An approximation of the image as a GridVisualBuilder.</returns>
         public static GridVisualBuilder FromImage(Stream stream, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
         {
-            using var image = Image.Load<Rgba32>(stream);
-            return FromImage(image, targetSize, cellAspectRatio, texturizer);
+            using var bitmap = SKBitmap.Decode(stream);
+            return FromImage(bitmap, targetSize, cellAspectRatio, texturizer);
         }
 
         /// <summary>
@@ -49,20 +47,14 @@ namespace NetAF.Imaging
         /// <param name="cellAspectRatio">The aspect ratio of the cells used to display the image. For square cells use CellAspectRatio.Square.</param>
         /// <param name="texturizer">The texturizer to use for providing texture.</param>
         /// <returns>An approximation of the image as a GridVisualBuilder.</returns>
-        private static GridVisualBuilder FromImage(Image<Rgba32> image, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
+        private static GridVisualBuilder FromImage(SKBitmap image, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
         {
             // the ratio of the cells used to display the pixels may not be square, image may need to be adjusted to accommodate this.
             // when it is rendered the natural stretching of the target will correct this
             Assets.Size ratioCorrectedTargetSize = new((int)(targetSize.Width * cellAspectRatio.HeightRatio), (int)(targetSize.Height * cellAspectRatio.WidthRatio));
 
-            // treat as 32 bit data
-            Rgba32[] pixelArray = new Rgba32[ratioCorrectedTargetSize.Width * ratioCorrectedTargetSize.Height];
-
             // resize the image to match the target size so that pixels in the image match 1:1 with the target
-            image.Mutate(x => x.Resize(ratioCorrectedTargetSize.Width, ratioCorrectedTargetSize.Height));
-
-            // pull the pixel data into the buffer
-            image.CopyPixelDataTo(pixelArray);
+            using var resized = image.Resize(new SKImageInfo(ratioCorrectedTargetSize.Width, ratioCorrectedTargetSize.Height), SKSamplingOptions.Default);
 
             // the builder will be used to display the image
             GridVisualBuilder builder = new(AnsiColor.Black, AnsiColor.White);
@@ -72,11 +64,11 @@ namespace NetAF.Imaging
             {
                 for (var x = 0; x < ratioCorrectedTargetSize.Width; x++)
                 {
-                    Rgba32 pixel = pixelArray[y * ratioCorrectedTargetSize.Width + x];
+                    SKColor pixel = resized.GetPixel(x, y);
 
                     // account for alpha when assigning background color
-                    var normalisedAlpha = 1d / byte.MaxValue * pixel.A;
-                    var background = new AnsiColor((byte)(pixel.R * normalisedAlpha), (byte)(pixel.G * normalisedAlpha), (byte)(pixel.B * normalisedAlpha));
+                    var normalisedAlpha = 1d / byte.MaxValue * pixel.Alpha;
+                    var background = new AnsiColor((byte)(pixel.Red * normalisedAlpha), (byte)(pixel.Green * normalisedAlpha), (byte)(pixel.Blue * normalisedAlpha));
                     builder.SetCell(x, y, background);
 
                     // apply texture
