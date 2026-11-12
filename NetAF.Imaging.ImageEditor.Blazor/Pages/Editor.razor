@@ -1,0 +1,442 @@
+@page "/"
+@page "/editor"
+@using System.Text
+@using System.Collections.Generic
+@using NetAF.Assets
+@using NetAF.Targets.Console.Rendering
+
+<PageTitle>Image Editor</PageTitle>
+
+<div class="editor-root">
+    <h1>Image Editor</h1>
+
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <label>Width</label>
+            <input type="number" min="1" max="100" @bind="pendingWidth" class="dim-input" />
+            <label>Height</label>
+            <input type="number" min="1" max="100" @bind="pendingHeight" class="dim-input" />
+            <button class="btn btn-primary btn-sm" @onclick="ResizeGrid">Apply Size</button>
+            <button class="btn btn-outline-secondary btn-sm" @onclick="ClearGrid">Clear</button>
+        </div>
+
+        <div class="toolbar-group">
+            <label>Cell Ratio (W : H)</label>
+            <input type="number" min="0.1" max="10" step="0.1" @bind="cellRatioWidth" class="ratio-input" />
+            <span>:</span>
+            <input type="number" min="0.1" max="10" step="0.1" @bind="cellRatioHeight" class="ratio-input" />
+        </div>
+
+        <div class="toolbar-group">
+            <label>Foreground</label>
+            <input type="color" @bind="foreground" @bind:event="oninput" />
+            <span class="swatch" style="background:@foreground"></span>
+            <label>Background</label>
+            <input type="color" @bind="background" @bind:event="oninput" />
+            <span class="swatch" style="background:@background"></span>
+            <label>Char</label>
+            <input type="text" maxlength="1" @bind="brushChar" class="char-input" />
+        </div>
+
+        <div class="toolbar-group">
+            <label>Tool</label>
+            <select @bind="currentTool" class="tool-select">
+                <option value="@Tool.PaintBoth">Paint Both</option>
+                <option value="@Tool.PaintForeground">Paint Foreground</option>
+                <option value="@Tool.PaintBackground">Paint Background</option>
+                <option value="@Tool.PaintChar">Paint Character</option>
+                <option value="@Tool.FillBoth">Fill Bucket (Both)</option>
+                <option value="@Tool.FillForeground">Fill Bucket (Foreground)</option>
+                <option value="@Tool.FillBackground">Fill Bucket (Background)</option>
+                <option value="@Tool.SampleForeground">Sample Foreground</option>
+                <option value="@Tool.SampleBackground">Sample Background</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="palette">
+        <span class="palette-label">Palette (@palette.Count):</span>
+        @foreach (var color in palette)
+        {
+            <span class="palette-swatch"
+                  style="background:@color"
+                  title="@color"
+                  @onclick="() => OnPaletteClick(color)"></span>
+        }
+    </div>
+
+    <div class="grid-wrapper" @onmouseup="EndPaint" @onmouseleave="EndPaint">
+        <table class="cell-grid">
+            <tbody>
+                @for (var y = 0; y < height; y++)
+                {
+                    var row = y;
+                    <tr>
+                        @for (var x = 0; x < width; x++)
+                        {
+                            var col = x;
+                            var cell = cells[row][col];
+                            <td class="grid-cell"
+                                style="color:@cell.Foreground;background:@cell.Background;width:@CellWidthPx;height:@CellHeightPx"
+                                @onmousedown="() => StartPaint(row, col)"
+                                @onmouseenter="() => PaintIfDrawing(row, col)">@cell.Character</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="serialized">
+        <label for="grid-string">Serialized (GridVisualBuilder)</label>
+        <textarea id="grid-string"
+                  class="grid-string"
+                  spellcheck="false"
+                  value="@gridString"
+                  @onchange="OnStringChanged"></textarea>
+        @if (!string.IsNullOrEmpty(parseError))
+        {
+            <div class="parse-error">@parseError</div>
+        }
+    </div>
+</div>
+
+@code {
+    private enum Tool
+    {
+        PaintBoth,
+        PaintForeground,
+        PaintBackground,
+        PaintChar,
+        FillBoth,
+        FillForeground,
+        FillBackground,
+        SampleForeground,
+        SampleBackground
+    }
+
+    private class Cell
+    {
+        public string Foreground { get; set; } = "#ffffff";
+        public string Background { get; set; } = "#000000";
+        public string Character { get; set; } = " ";
+    }
+
+    private const int BaseCellSize = 24;
+
+    private int width = 16;
+    private int height = 16;
+    private int pendingWidth = 16;
+    private int pendingHeight = 16;
+    private double cellRatioWidth = 1;
+    private double cellRatioHeight = 1;
+    private string foreground = "#ffffff";
+    private string background = "#000000";
+    private string brushChar = "#";
+    private Tool currentTool = Tool.PaintBoth;
+    private bool isDrawing;
+
+    private List<List<Cell>> cells = new();
+    private List<string> palette = new();
+
+    private string gridString = string.Empty;
+    private string? parseError;
+
+    private string CellWidthPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioWidth)}px");
+    private string CellHeightPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioHeight)}px");
+
+    protected override void OnInitialized()
+    {
+        BuildGrid();
+    }
+
+    private void BuildGrid()
+    {
+        cells = new List<List<Cell>>();
+        for (var y = 0; y < height; y++)
+        {
+            var row = new List<Cell>();
+            for (var x = 0; x < width; x++)
+                row.Add(new Cell());
+            cells.Add(row);
+        }
+        RebuildPalette();
+    }
+
+    private void ResizeGrid()
+    {
+        var newWidth = Math.Clamp(pendingWidth, 1, 100);
+        var newHeight = Math.Clamp(pendingHeight, 1, 100);
+
+        var newCells = new List<List<Cell>>();
+        for (var y = 0; y < newHeight; y++)
+        {
+            var row = new List<Cell>();
+            for (var x = 0; x < newWidth; x++)
+            {
+                if (y < cells.Count && x < cells[y].Count)
+                    row.Add(cells[y][x]);
+                else
+                    row.Add(new Cell());
+            }
+            newCells.Add(row);
+        }
+
+        width = newWidth;
+        height = newHeight;
+        pendingWidth = newWidth;
+        pendingHeight = newHeight;
+        cells = newCells;
+        RebuildPalette();
+    }
+
+    private void ClearGrid()
+    {
+        BuildGrid();
+    }
+
+    private void StartPaint(int row, int col)
+    {
+        if (currentTool == Tool.SampleForeground)
+        {
+            foreground = cells[row][col].Foreground;
+            return;
+        }
+        if (currentTool == Tool.SampleBackground)
+        {
+            background = cells[row][col].Background;
+            return;
+        }
+
+        if (currentTool is Tool.FillBoth or Tool.FillForeground or Tool.FillBackground)
+        {
+            FloodFill(row, col);
+            return;
+        }
+
+        isDrawing = true;
+        ApplyBrush(row, col);
+    }
+
+    private void PaintIfDrawing(int row, int col)
+    {
+        if (isDrawing)
+            ApplyBrush(row, col);
+    }
+
+    private void EndPaint()
+    {
+        isDrawing = false;
+    }
+
+    private void ApplyBrush(int row, int col)
+    {
+        var cell = cells[row][col];
+        switch (currentTool)
+        {
+            case Tool.PaintBoth:
+                cell.Foreground = foreground;
+                cell.Background = background;
+                if (!string.IsNullOrEmpty(brushChar))
+                    cell.Character = brushChar;
+                break;
+            case Tool.PaintForeground:
+                cell.Foreground = foreground;
+                break;
+            case Tool.PaintBackground:
+                cell.Background = background;
+                break;
+            case Tool.PaintChar:
+                cell.Character = string.IsNullOrEmpty(brushChar) ? " " : brushChar;
+                break;
+        }
+        RebuildPalette();
+    }
+
+    private void FloodFill(int startRow, int startCol)
+    {
+        var target = cells[startRow][startCol];
+        var matchForeground = target.Foreground;
+        var matchBackground = target.Background;
+
+        bool Matches(Cell c) => currentTool switch
+        {
+            Tool.FillForeground => string.Equals(c.Foreground, matchForeground, StringComparison.OrdinalIgnoreCase),
+            Tool.FillBackground => string.Equals(c.Background, matchBackground, StringComparison.OrdinalIgnoreCase),
+            _ => string.Equals(c.Foreground, matchForeground, StringComparison.OrdinalIgnoreCase)
+                 && string.Equals(c.Background, matchBackground, StringComparison.OrdinalIgnoreCase)
+        };
+
+        void Apply(Cell c)
+        {
+            switch (currentTool)
+            {
+                case Tool.FillForeground:
+                    c.Foreground = foreground;
+                    break;
+                case Tool.FillBackground:
+                    c.Background = background;
+                    break;
+                default:
+                    c.Foreground = foreground;
+                    c.Background = background;
+                    break;
+            }
+        }
+
+        // nothing to do if the target already matches the brush selection.
+        if (Matches(cells[startRow][startCol]))
+        {
+            var sameForeground = string.Equals(foreground, matchForeground, StringComparison.OrdinalIgnoreCase);
+            var sameBackground = string.Equals(background, matchBackground, StringComparison.OrdinalIgnoreCase);
+            if ((currentTool == Tool.FillForeground && sameForeground) ||
+                (currentTool == Tool.FillBackground && sameBackground) ||
+                (currentTool == Tool.FillBoth && sameForeground && sameBackground))
+                return;
+        }
+
+        var visited = new bool[height, width];
+        var queue = new Queue<(int Row, int Col)>();
+        queue.Enqueue((startRow, startCol));
+        visited[startRow, startCol] = true;
+
+        while (queue.Count > 0)
+        {
+            var (row, col) = queue.Dequeue();
+            var cell = cells[row][col];
+            if (!Matches(cell))
+                continue;
+
+            Apply(cell);
+
+            foreach (var (dr, dc) in new[] { (-1, 0), (1, 0), (0, -1), (0, 1) })
+            {
+                var nr = row + dr;
+                var nc = col + dc;
+                if (nr < 0 || nr >= height || nc < 0 || nc >= width || visited[nr, nc])
+                    continue;
+                visited[nr, nc] = true;
+                if (Matches(cells[nr][nc]))
+                    queue.Enqueue((nr, nc));
+            }
+        }
+
+        RebuildPalette();
+    }
+
+    private void OnPaletteClick(string color)
+    {
+        if (currentTool == Tool.PaintBackground || currentTool == Tool.SampleBackground)
+            background = color;
+        else
+            foreground = color;
+    }
+
+    private void RebuildPalette()
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in cells)
+        {
+            foreach (var cell in row)
+            {
+                set.Add(cell.Foreground);
+                set.Add(cell.Background);
+                if (set.Count >= 100)
+                    break;
+            }
+            if (set.Count >= 100)
+                break;
+        }
+        palette = set.Take(100).ToList();
+
+        SyncStringFromCells();
+    }
+
+    private void SyncStringFromCells()
+    {
+        var builder = new GridVisualBuilder(AnsiColor.Black, AnsiColor.White);
+        builder.Resize(new Size(width, height));
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var cell = cells[y][x];
+                var character = string.IsNullOrEmpty(cell.Character) ? ' ' : cell.Character[0];
+                builder.SetCell(x, y, character, HexToAnsi(cell.Foreground), HexToAnsi(cell.Background));
+            }
+        }
+
+        gridString = builder.ToString();
+        parseError = null;
+    }
+
+    private void OnStringChanged(ChangeEventArgs e)
+    {
+        var data = e.Value?.ToString() ?? string.Empty;
+        gridString = data;
+
+        if (string.IsNullOrWhiteSpace(data))
+            return;
+
+        GridVisualBuilder builder;
+        try
+        {
+            builder = GridVisualBuilder.FromString(data);
+        }
+        catch (Exception ex)
+        {
+            parseError = $"Could not parse string: {ex.Message}";
+            return;
+        }
+
+        var newWidth = Math.Clamp(builder.DisplaySize.Width, 1, 100);
+        var newHeight = Math.Clamp(builder.DisplaySize.Height, 1, 100);
+
+        var newCells = new List<List<Cell>>();
+        for (var y = 0; y < newHeight; y++)
+        {
+            var row = new List<Cell>();
+            for (var x = 0; x < newWidth; x++)
+            {
+                var character = builder.GetCharacter(x, y);
+                row.Add(new Cell
+                {
+                    Character = character == '\0' ? " " : character.ToString(),
+                    Foreground = AnsiToHex(builder.GetCellForegroundColor(x, y)),
+                    Background = AnsiToHex(builder.GetCellBackgroundColor(x, y))
+                });
+            }
+            newCells.Add(row);
+        }
+
+        width = newWidth;
+        height = newHeight;
+        pendingWidth = newWidth;
+        pendingHeight = newHeight;
+        cells = newCells;
+        parseError = null;
+
+        RebuildPalette();
+    }
+
+    private static AnsiColor HexToAnsi(string hex)
+    {
+        if (string.IsNullOrEmpty(hex))
+            return AnsiColor.Black;
+
+        var value = hex.TrimStart('#');
+        if (value.Length != 6)
+            return AnsiColor.Black;
+
+        var r = Convert.ToByte(value.Substring(0, 2), 16);
+        var g = Convert.ToByte(value.Substring(2, 2), 16);
+        var b = Convert.ToByte(value.Substring(4, 2), 16);
+        return new AnsiColor(r, g, b);
+    }
+
+    private static string AnsiToHex(AnsiColor color)
+    {
+        return $"#{color.R:x2}{color.G:x2}{color.B:x2}";
+    }
+}
