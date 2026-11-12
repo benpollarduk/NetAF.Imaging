@@ -4,6 +4,8 @@
 @using System.Collections.Generic
 @using NetAF.Assets
 @using NetAF.Targets.Console.Rendering
+@using NetAF.Imaging
+@using NetAF.Imaging.Textures
 
 <PageTitle>Image Editor</PageTitle>
 
@@ -18,6 +20,13 @@
             <input type="number" min="1" max="100" @bind="pendingHeight" class="dim-input" />
             <button class="btn btn-primary btn-sm" @onclick="ResizeGrid">Apply Size</button>
             <button class="btn btn-outline-secondary btn-sm" @onclick="ClearGrid">Clear</button>
+        </div>
+
+        <div class="toolbar-group">
+            <label class="btn btn-outline-primary btn-sm load-image-btn">
+                Load Image
+                <InputFile OnChange="LoadImage" accept="image/*" style="display:none" />
+            </label>
         </div>
 
         <div class="toolbar-group">
@@ -160,6 +169,59 @@
                 row.Add(new Cell());
             cells.Add(row);
         }
+        RebuildPalette();
+    }
+
+    private async Task LoadImage(InputFileChangeEventArgs e)
+    {
+        parseError = null;
+
+        try
+        {
+            var targetSize = new Size(Math.Clamp(pendingWidth, 1, 100), Math.Clamp(pendingHeight, 1, 100));
+            var aspectRatio = new CellAspectRatio(cellRatioWidth, cellRatioHeight);
+
+            using var stream = new MemoryStream();
+            await e.File.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024).CopyToAsync(stream);
+            stream.Position = 0;
+
+            var builder = VisualHelper.FromImage(stream, targetSize, aspectRatio, new NoTexturizer());
+            LoadFromBuilder(builder);
+        }
+        catch (Exception ex)
+        {
+            parseError = $"Could not load image: {ex.Message}";
+        }
+    }
+
+    private void LoadFromBuilder(GridVisualBuilder builder)
+    {
+        var newWidth = Math.Clamp(builder.DisplaySize.Width, 1, 100);
+        var newHeight = Math.Clamp(builder.DisplaySize.Height, 1, 100);
+
+        var newCells = new List<List<Cell>>();
+        for (var y = 0; y < newHeight; y++)
+        {
+            var row = new List<Cell>();
+            for (var x = 0; x < newWidth; x++)
+            {
+                var character = builder.GetCharacter(x, y);
+                row.Add(new Cell
+                {
+                    Character = character == '\0' ? " " : character.ToString(),
+                    Foreground = AnsiToHex(builder.GetCellForegroundColor(x, y)),
+                    Background = AnsiToHex(builder.GetCellBackgroundColor(x, y))
+                });
+            }
+            newCells.Add(row);
+        }
+
+        width = newWidth;
+        height = newHeight;
+        pendingWidth = newWidth;
+        pendingHeight = newHeight;
+        cells = newCells;
+
         RebuildPalette();
     }
 
@@ -390,34 +452,7 @@
             return;
         }
 
-        var newWidth = Math.Clamp(builder.DisplaySize.Width, 1, 100);
-        var newHeight = Math.Clamp(builder.DisplaySize.Height, 1, 100);
-
-        var newCells = new List<List<Cell>>();
-        for (var y = 0; y < newHeight; y++)
-        {
-            var row = new List<Cell>();
-            for (var x = 0; x < newWidth; x++)
-            {
-                var character = builder.GetCharacter(x, y);
-                row.Add(new Cell
-                {
-                    Character = character == '\0' ? " " : character.ToString(),
-                    Foreground = AnsiToHex(builder.GetCellForegroundColor(x, y)),
-                    Background = AnsiToHex(builder.GetCellBackgroundColor(x, y))
-                });
-            }
-            newCells.Add(row);
-        }
-
-        width = newWidth;
-        height = newHeight;
-        pendingWidth = newWidth;
-        pendingHeight = newHeight;
-        cells = newCells;
-        parseError = null;
-
-        RebuildPalette();
+        LoadFromBuilder(builder);
     }
 
     private static AnsiColor HexToAnsi(string hex)

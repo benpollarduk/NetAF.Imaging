@@ -32,6 +32,11 @@
     width: 3.5rem;
 }
 
+.load-image-btn {
+    margin: 0;
+    cursor: pointer;
+}
+
 .char-input {
     width: 3rem;
     text-align: center;
