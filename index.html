@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NetAF.Imaging.ImageEditor.Blazor</title>
     <base href="/NetAF.Imaging/" />
-    <link href="_framework/dotnet.6cnkqbe36p.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-Jrk1n6b+mcY/vF7blq2y1OUK6K9r+XUGeKVJieGLnSc=" />
+    <link href="_framework/dotnet.lzrhm8sbdu.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-8R1tjndUI7Alk8KnvKYhz24Nb9I0AjSCntkPQmloYcA=" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="icon.png" />
@@ -17,20 +17,20 @@
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.w3qd1tpl0e.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.6cnkqbe36p.js",
-    "./_framework/dotnet.native.js": "./_framework/dotnet.native.slj497bc0u.js",
-    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.5nc8i5dl74.js"
+    "./_framework/dotnet.js": "./_framework/dotnet.lzrhm8sbdu.js",
+    "./_framework/dotnet.native.js": "./_framework/dotnet.native.qm0ly00wu6.js",
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.v2rwe8u38b.js"
   },
   "scopes": {},
   "integrity": {
     "./_framework/blazor.webassembly.js": "sha256-lDXsDYFgm62F+YUvxES7IOTCXYpiHpU3uR45YdC6mq4=",
     "./_framework/blazor.webassembly.w3qd1tpl0e.js": "sha256-lDXsDYFgm62F+YUvxES7IOTCXYpiHpU3uR45YdC6mq4=",
-    "./_framework/dotnet.6cnkqbe36p.js": "sha256-Jrk1n6b+mcY/vF7blq2y1OUK6K9r+XUGeKVJieGLnSc=",
-    "./_framework/dotnet.js": "sha256-Jrk1n6b+mcY/vF7blq2y1OUK6K9r+XUGeKVJieGLnSc=",
-    "./_framework/dotnet.native.js": "sha256-QBGtKipFlrFcav3/K3Cvt5W9CmNShodh/b2DmNMt6VE=",
-    "./_framework/dotnet.native.slj497bc0u.js": "sha256-QBGtKipFlrFcav3/K3Cvt5W9CmNShodh/b2DmNMt6VE=",
-    "./_framework/dotnet.runtime.5nc8i5dl74.js": "sha256-/3dBg9sj1yLD3h0PDMHnNUXWs/2zWwIMEzom1Xz3Q40=",
-    "./_framework/dotnet.runtime.js": "sha256-/3dBg9sj1yLD3h0PDMHnNUXWs/2zWwIMEzom1Xz3Q40="
+    "./_framework/dotnet.js": "sha256-8R1tjndUI7Alk8KnvKYhz24Nb9I0AjSCntkPQmloYcA=",
+    "./_framework/dotnet.lzrhm8sbdu.js": "sha256-8R1tjndUI7Alk8KnvKYhz24Nb9I0AjSCntkPQmloYcA=",
+    "./_framework/dotnet.native.js": "sha256-jqe7Nj08fafCkO3FyUeadI7V+0UYDMA1jbO2Txfjt7o=",
+    "./_framework/dotnet.native.qm0ly00wu6.js": "sha256-jqe7Nj08fafCkO3FyUeadI7V+0UYDMA1jbO2Txfjt7o=",
+    "./_framework/dotnet.runtime.js": "sha256-6SBqDbLLy460Bxd7wMZoiO97hZfLTuF+HRhWT3elS7U=",
+    "./_framework/dotnet.runtime.v2rwe8u38b.js": "sha256-6SBqDbLLy460Bxd7wMZoiO97hZfLTuF+HRhWT3elS7U="
   }
 }</script>
 </head>
@@ -65,6 +65,26 @@
                 if (!el) return { left: 0, top: 0, width: 0, height: 0 };
                 const r = el.getBoundingClientRect();
                 return { left: r.left, top: r.top, width: r.width, height: r.height };
+            }
+        };
+
+        window.clipboard = {
+            // copies the provided text to the clipboard
+            copy: async function (text) {
+                try {
+                    await navigator.clipboard.writeText(text ?? "");
+                    return true;
+                } catch {
+                    return false;
+                }
+            },
+            // reads text from the clipboard
+            paste: async function () {
+                try {
+                    return await navigator.clipboard.readText();
+                } catch {
+                    return "";
+                }
             }
         };
     </script>
