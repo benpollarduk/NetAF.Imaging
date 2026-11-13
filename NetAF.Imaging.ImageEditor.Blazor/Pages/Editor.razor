@@ -230,12 +230,22 @@
                                 disabled="@autoUpdateString">
                             Update
                         </button>
+                        <button class="btn btn-outline-secondary btn-sm"
+                                @onclick="CopyStringToClipboard">
+                            Copy
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm"
+                                @onclick="PasteStringFromClipboard">
+                            Paste
+                        </button>
                     </div>
                 </div>
                 <textarea id="grid-string"
                           class="grid-string"
                           spellcheck="false"
                           value="@gridString"
+                          @oninput="OnStringInput"
+                          @onkeydown:preventDefault="true"
                           @onchange="OnStringChanged"></textarea>
                 @if (!string.IsNullOrEmpty(parseError))
                 {
@@ -507,7 +517,16 @@
 
     private void ClearGrid()
     {
-        BuildGrid();
+        foreach (var row in cells)
+        {
+            foreach (var cell in row)
+            {
+                cell.Character = " ";
+                cell.Background = "#000000";
+                cell.Foreground = "#ffffff";
+            }
+        }
+        RebuildPalette();
     }
 
     private void HandleCellDown((int Row, int Col) pos)
@@ -865,11 +884,35 @@
         parseError = null;
     }
 
-    private void OnStringChanged(ChangeEventArgs e)
+    private async Task OnStringChanged(ChangeEventArgs e)
     {
         var data = e.Value?.ToString() ?? string.Empty;
         gridString = data;
+        await RenderFromString(gridString);
+    }
 
+    private async Task OnStringInput(ChangeEventArgs e)
+    {
+        gridString = e.Value?.ToString() ?? string.Empty;
+        await RenderFromString(gridString);
+    }
+
+    private async Task CopyStringToClipboard()
+    {
+        await JS.InvokeVoidAsync("clipboard.copy", gridString);
+    }
+
+    private async Task PasteStringFromClipboard()
+    {
+        var data = await JS.InvokeAsync<string>("clipboard.paste");
+
+        // replace all previous text with the pasted content.
+        gridString = data ?? string.Empty;
+        await RenderFromString(gridString);
+    }
+
+    private async Task RenderFromString(string data)
+    {
         if (string.IsNullOrWhiteSpace(data))
             return;
 
@@ -885,6 +928,7 @@
         }
 
         LoadFromBuilder(builder);
+        await FitToView();
     }
 
     private static AnsiColor HexToAnsi(string hex)

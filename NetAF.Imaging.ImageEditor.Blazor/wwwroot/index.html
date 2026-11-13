@@ -49,6 +49,26 @@
                 return { left: r.left, top: r.top, width: r.width, height: r.height };
             }
         };
+
+        window.clipboard = {
+            // copies the provided text to the clipboard
+            copy: async function (text) {
+                try {
+                    await navigator.clipboard.writeText(text ?? "");
+                    return true;
+                } catch {
+                    return false;
+                }
+            },
+            // reads text from the clipboard
+            paste: async function () {
+                try {
+                    return await navigator.clipboard.readText();
+                } catch {
+                    return "";
+                }
+            }
+        };
     </script>
 </body>
 
