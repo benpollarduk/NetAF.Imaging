@@ -1,3 +1,14 @@
 main {
     flex: 1;
 }
+
+.version-label {
+    position: fixed;
+    bottom: 4px;
+    right: 8px;
+    font-size: 0.7rem;
+    color: rgba(128, 128, 128, 0.6);
+    pointer-events: none;
+    user-select: none;
+    z-index: 1000;
+}

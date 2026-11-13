@@ -90,11 +90,18 @@ jobs:
         (Get-Content $filePath) -replace '<base href="[^"]*" />', '<base href="/NetAF.Imaging/" />' | Set-Content -Path $filePath
       shell: pwsh
 
+    - name: Disable Git line ending conversion for published files
+      run: |
+        cd "${{ runner.temp }}\blazor"
+        "* -text" | Set-Content -Path ".gitattributes" -Encoding ascii
+      shell: pwsh
+
     - name: Commit and push changes to blazor-publish
       run: |
         cd "${{ runner.temp }}\blazor"
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        git config --local core.autocrlf false
         git add .
         git commit -m "Update app"
         git push https://${{ secrets.PAT }}@github.com/benpollarduk/NetAF.Imaging.git HEAD:blazor-publish

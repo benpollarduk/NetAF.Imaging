@@ -1,4 +1,11 @@
 ﻿@inherits LayoutComponentBase
+@using System.Reflection
 <main>
     @Body
 </main>
+<div class="version-label">v@(Version)</div>
+
+@code {
+    private static string Version { get; } =
+        Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+}
