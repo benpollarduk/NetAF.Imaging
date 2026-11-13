@@ -55,7 +55,7 @@ jobs:
 
     - name: Publish Blazor app
       run: |
-        cd NetAF.Example.Blazor
+        cd NetAF.Imaging.ImageEditor.Blazor
         dotnet publish -c Release -o dist
       shell: bash
 
