@@ -88,5 +88,10 @@ The generated visual:
 ## Documentation
 Please visit [https://benpollarduk.github.io/NetAF-docs/docs/visuals.html](https://benpollarduk.github.io/NetAF-docs/docs/visuals.html) to view the NetAF.Imaging documentation.
 
+## Tools
+The NetAF.Imaging.ImageCreator.Blazor project provides a tool for creating images.
+
+[![Create Image](https://img.shields.io/badge/Try-Now-brightgreen?style=for-the-badge)](https://benpollarduk.github.io/NetAF.Imaging/)
+
 ## For Open Questions
 Visit https://github.com/benpollarduk/NetAF.Imaging/issues
