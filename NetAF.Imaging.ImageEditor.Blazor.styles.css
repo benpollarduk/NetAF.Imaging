@@ -2,6 +2,17 @@
 main[b-zk968cgkp0] {
     flex: 1;
 }
+
+.version-label[b-zk968cgkp0] {
+    position: fixed;
+    bottom: 4px;
+    right: 8px;
+    font-size: 0.7rem;
+    color: rgba(128, 128, 128, 0.6);
+    pointer-events: none;
+    user-select: none;
+    z-index: 1000;
+}
 /* /Pages/CellView.razor.rz.scp.css */
 .grid-cell[b-5fmt50nmv3] {
     box-sizing: border-box;
