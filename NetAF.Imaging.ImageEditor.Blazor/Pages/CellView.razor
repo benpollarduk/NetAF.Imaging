@@ -1,0 +1,43 @@
+@* Lightweight cell rendered in the editor grid. Only re-renders when its own values change. *@
+
+<td class="grid-cell"
+    style="color:@Foreground;background:@Background;width:@WidthPx;min-width:@WidthPx;max-width:@WidthPx;height:@HeightPx;min-height:@HeightPx;max-height:@HeightPx"
+    @onmousedown="() => OnDown.InvokeAsync((Row, Col))"
+    @onmouseenter="() => OnEnter.InvokeAsync((Row, Col))">@Character</td>
+
+@code {
+    [Parameter] public int Row { get; set; }
+    [Parameter] public int Col { get; set; }
+    [Parameter] public string Character { get; set; } = " ";
+    [Parameter] public string Foreground { get; set; } = "#ffffff";
+    [Parameter] public string Background { get; set; } = "#000000";
+    [Parameter] public string WidthPx { get; set; } = "24px";
+    [Parameter] public string HeightPx { get; set; } = "24px";
+    [Parameter] public EventCallback<(int Row, int Col)> OnDown { get; set; }
+    [Parameter] public EventCallback<(int Row, int Col)> OnEnter { get; set; }
+
+    private string? character;
+    private string? foreground;
+    private string? background;
+    private string? widthPx;
+    private string? heightPx;
+
+    protected override bool ShouldRender()
+    {
+        if (character == Character
+            && foreground == Foreground
+            && background == Background
+            && widthPx == WidthPx
+            && heightPx == HeightPx)
+        {
+            return false;
+        }
+
+        character = Character;
+        foreground = Foreground;
+        background = Background;
+        widthPx = WidthPx;
+        heightPx = HeightPx;
+        return true;
+    }
+}

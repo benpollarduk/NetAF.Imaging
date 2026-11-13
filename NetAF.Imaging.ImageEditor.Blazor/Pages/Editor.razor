@@ -7,170 +7,251 @@
 @using NetAF.Imaging
 @using NetAF.Imaging.Textures
 @inject HttpClient Http
+@inject IJSRuntime JS
 
-<PageTitle>Image Editor</PageTitle>
+<PageTitle>NetAF.Imaging Editor</PageTitle>
 
 <div class="editor-root">
-    <h1>Image Editor</h1>
+    <header class="app-header">
+        <h1>NetAF.Imaging Editor</h1>
+    </header>
 
-    <div class="toolbar">
-        <div class="toolbar-group">
-            <label>Width</label>
-            <input type="number" min="1" max="100" @bind="pendingWidth" class="dim-input" />
-            <label>Height</label>
-            <input type="number" min="1" max="100" @bind="pendingHeight" class="dim-input" />
-            <button class="btn btn-primary btn-sm" @onclick="ResizeGrid">Apply Size</button>
-            <button class="btn btn-outline-secondary btn-sm" @onclick="ClearGrid">Clear</button>
-        </div>
+    <div class="editor-layout">
+        <aside class="sidebar">
+            <section class="panel">
+                <h2 class="panel-title">Canvas</h2>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Width</label>
+                        <input type="number" min="1" max="100" @bind="pendingWidth" class="dim-input" />
+                    </div>
+                    <div class="field">
+                        <label>Height</label>
+                        <input type="number" min="1" max="100" @bind="pendingHeight" class="dim-input" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Cell Aspect Ratio</label>
+                    <select @bind="selectedAspectRatio" class="tool-select full-width">
+                        <option value="@AspectRatioOption.Console">Console (0.55 : 1)</option>
+                        <option value="@AspectRatioOption.Square">Square (1 : 1)</option>
+                        <option value="@AspectRatioOption.Custom">Custom</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Cell Ratio (W : H)</label>
+                    <div class="inline">
+                        <input type="number" min="0.1" max="10" step="0.1" @bind="cellRatioWidth" class="ratio-input" />
+                        <span class="sep">:</span>
+                        <input type="number" min="0.1" max="10" step="0.1" @bind="cellRatioHeight" class="ratio-input" />
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-primary btn-sm" @onclick="ResizeGrid">Apply Size</button>
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="ClearGrid">Clear</button>
+                </div>
+            </section>
 
-        <div class="toolbar-group">
-            <label class="btn btn-outline-primary btn-sm load-image-btn">
-                Load Image
-                <InputFile OnChange="LoadImage" accept="image/*" style="display:none" />
-            </label>
-            <input type="text" placeholder="Image URL" @bind="imageUrl" class="url-input" />
-            <button class="btn btn-outline-primary btn-sm" @onclick="LoadImageFromUrl">Load URL</button>
-        </div>
+            <section class="panel">
+                <h2 class="panel-title">Image</h2>
+                <div class="field">
+                    <label>Texturizer</label>
+                    <select @bind="selectedTexturizer" class="tool-select full-width">
+                        <option value="@TexturizerOption.None">None</option>
+                        <option value="@TexturizerOption.Brightness">Brightness</option>
+                    </select>
+                </div>
+                <label class="btn btn-outline-primary btn-sm load-image-btn full-width">
+                    Load from File
+                    <InputFile OnChange="LoadImage" accept="image/*" style="display:none" />
+                </label>
+                <div class="field">
+                    <label>From URL</label>
+                    <input type="text" placeholder="https://..." @bind="imageUrl" class="url-input full-width" />
+                </div>
+                <button class="btn btn-outline-primary btn-sm full-width" @onclick="LoadImageFromUrl">Load from URL</button>
+            </section>
 
-        <div class="toolbar-group">
-            <label>Cell Ratio (W : H)</label>
-            <input type="number" min="0.1" max="10" step="0.1" @bind="cellRatioWidth" class="ratio-input" />
-            <span>:</span>
-            <input type="number" min="0.1" max="10" step="0.1" @bind="cellRatioHeight" class="ratio-input" />
-        </div>
+            <section class="panel">
+                <h2 class="panel-title">Brush</h2>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Background</label>
+                        <input type="color" @bind="background" @bind:event="oninput" />
+                    </div>
+                    <div class="field">
+                        <label>Foreground</label>
+                        <input type="color" @bind="foreground" @bind:event="oninput" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Character</label>
+                    <input type="text" maxlength="1" @bind="brushChar" @bind:event="oninput" class="char-input" />
+                </div>
+            </section>
 
-        <div class="toolbar-group">
-            <label>Foreground</label>
-            <input type="color" @bind="foreground" @bind:event="oninput" />
-            <span class="swatch" style="background:@foreground"></span>
-            <label>Background</label>
-            <input type="color" @bind="background" @bind:event="oninput" />
-            <span class="swatch" style="background:@background"></span>
-            <label>Char</label>
-            <input type="text" maxlength="1" @bind="brushChar" class="char-input" />
-        </div>
+            <section class="panel">
+                <h2 class="panel-title">Palette <span class="count">@palette.Count</span></h2>
+                <div class="palette">
+                    @foreach (var color in palette)
+                    {
+                        <span class="palette-swatch"
+                              style="background:@color"
+                              title="@color"
+                              @onclick="() => OnPaletteClick(color)"></span>
+                    }
+                </div>
+            </section>
 
-        <div class="toolbar-group">
-            <label>Tool</label>
-            <select @bind="currentTool" class="tool-select">
-                <option value="@Tool.PaintBoth">Paint Both</option>
-                <option value="@Tool.PaintForeground">Paint Foreground</option>
-                <option value="@Tool.PaintBackground">Paint Background</option>
-                <option value="@Tool.PaintChar">Paint Character</option>
-                <option value="@Tool.FillBoth">Fill Bucket (Both)</option>
-                <option value="@Tool.FillForeground">Fill Bucket (Foreground)</option>
-                <option value="@Tool.FillBackground">Fill Bucket (Background)</option>
-                <option value="@Tool.SampleForeground">Sample Foreground</option>
-                <option value="@Tool.SampleBackground">Sample Background</option>
-            </select>
-        </div>
-    </div>
+            <section class="panel">
+                <h2 class="panel-title">Tool</h2>
+                <select @bind="toolMode" class="tool-select full-width">
+                    <option value="@ToolMode.Paint">Paint</option>
+                    <option value="@ToolMode.Fill">Fill</option>
+                    <option value="@ToolMode.Sample">Sample</option>
+                </select>
+                <div class="field tool-channels">
+                    <label class="checkbox">
+                        <input type="checkbox" @bind="applyBackground" />
+                        Background
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" @bind="applyForeground" />
+                        Foreground
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" @bind="applyCharacter" />
+                        Character
+                    </label>
+                </div>
+            </section>
 
-    <div class="toolbar">
-        <div class="toolbar-group">
-            <label>Replace</label>
-            <select @bind="replaceTarget" class="tool-select">
-                <option value="@ReplaceTarget.Foreground">Foreground Color</option>
-                <option value="@ReplaceTarget.Background">Background Color</option>
-                <option value="@ReplaceTarget.Character">Character</option>
-            </select>
-
-            @if (replaceTarget == ReplaceTarget.Character)
-            {
-                <label>From</label>
-                <input type="text" maxlength="1" @bind="replaceFromChar" class="char-input" />
-                <label>To</label>
-                <span class="replace-to">'@brushChar'</span>
-            }
-            else if (replaceTarget == ReplaceTarget.Background)
-            {
-                <label>From</label>
-                <input type="color" @bind="replaceFromColor" />
-                <label>To</label>
-                <span class="swatch" style="background:@background"></span>
-            }
-            else
-            {
-                <label>From</label>
-                <input type="color" @bind="replaceFromColor" />
-                <label>To</label>
-                <span class="swatch" style="background:@foreground"></span>
-            }
-
-            <button class="btn btn-outline-primary btn-sm" @onclick="ReplaceAll">Replace All</button>
-        </div>
-    </div>
-
-    <div class="palette">
-        <span class="palette-label">Palette (@palette.Count):</span>
-        @foreach (var color in palette)
-        {
-            <span class="palette-swatch"
-                  style="background:@color"
-                  title="@color"
-                  @onclick="() => OnPaletteClick(color)"></span>
-        }
-    </div>
-
-    <div class="grid-wrapper" @onmouseup="EndPaint" @onmouseleave="EndPaint">
-        <table class="cell-grid">
-            <tbody>
-                @for (var y = 0; y < height; y++)
-                {
-                    var row = y;
-                    <tr>
-                        @for (var x = 0; x < width; x++)
+            <section class="panel">
+                <h2 class="panel-title">Replace</h2>
+                <div class="field">
+                    <label>Target</label>
+                    <select @bind="replaceTarget" class="tool-select full-width">
+                        <option value="@ReplaceTarget.Foreground">Foreground Color</option>
+                        <option value="@ReplaceTarget.Background">Background Color</option>
+                        <option value="@ReplaceTarget.Character">Character</option>
+                    </select>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>From</label>
+                        @if (replaceTarget == ReplaceTarget.Character)
                         {
-                            var col = x;
-                            var cell = cells[row][col];
-                            <td class="grid-cell"
-                                style="color:@cell.Foreground;background:@cell.Background;width:@CellWidthPx;height:@CellHeightPx"
-                                @onmousedown="() => StartPaint(row, col)"
-                                @onmouseenter="() => PaintIfDrawing(row, col)">@cell.Character</td>
+                            <input type="text" maxlength="1" @bind="replaceFromChar" class="char-input" />
                         }
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                        else
+                        {
+                            <input type="color" @bind="replaceFromColor" />
+                        }
+                    </div>
+                    <div class="field">
+                        <label>To (from brush)</label>
+                        @if (replaceTarget == ReplaceTarget.Character)
+                        {
+                            <span class="replace-to">'@brushChar'</span>
+                        }
+                        else if (replaceTarget == ReplaceTarget.Background)
+                        {
+                            <span class="swatch" style="background:@background"></span>
+                        }
+                        else
+                        {
+                            <span class="swatch" style="background:@foreground"></span>
+                        }
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm full-width" @onclick="ReplaceAll">Replace All</button>
+            </section>
+        </aside>
 
-    <div class="serialized">
-        <div class="serialized-header">
-            <label for="grid-string">Serialized (GridVisualBuilder)</label>
-            <label class="auto-update">
-                <input type="checkbox" @bind="AutoUpdateString" />
-                Auto-update on change
-            </label>
-            <button class="btn btn-outline-secondary btn-sm"
-                    @onclick="UpdateStringFromCells"
-                    disabled="@autoUpdateString">
-                Update
-            </button>
-        </div>
-        <textarea id="grid-string"
-                  class="grid-string"
-                  spellcheck="false"
-                  value="@gridString"
-                  @onchange="OnStringChanged"></textarea>
-        @if (!string.IsNullOrEmpty(parseError))
-        {
-            <div class="parse-error">@parseError</div>
-        }
+        <main class="canvas-area">
+            <section class="panel canvas-panel">
+                <div class="canvas-header">
+                    <h2 class="panel-title">Canvas</h2>
+                    <div class="zoom-controls">
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="ZoomOut" title="Zoom out">&minus;</button>
+                        <span class="zoom-level">@($"{zoom * 100:0}%")</span>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="ZoomIn" title="Zoom in">+</button>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="FitToView" title="Fit to view">Fit</button>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="ResetView" title="Reset to 100%">100%</button>
+                    </div>
+                </div>
+                <div class="grid-wrapper"
+                     @ref="gridWrapper"
+                     @onmouseup="OnViewportMouseUp"
+                     @onmouseleave="OnViewportMouseLeave"
+                     @onmousemove="OnViewportMouseMove"
+                     @onmousedown="OnViewportMouseDown"
+                     @onwheel="OnViewportWheel"
+                     @onwheel:preventDefault="true">
+                    <div class="grid-transform" style="transform: translate(@(FormattableString.Invariant($"{panX}px, {panY}px"))) scale(@FormattableString.Invariant($"{zoom}")); transform-origin: top left;">
+                        <table class="cell-grid">
+                            <tbody>
+                                @for (var y = 0; y < height; y++)
+                                {
+                                    var row = y;
+                                    <tr>
+                                        @for (var x = 0; x < width; x++)
+                                        {
+                                            var col = x;
+                                            var cell = cells[row][col];
+                                            <CellView Row="row"
+                                                      Col="col"
+                                                      Character="@cell.Character"
+                                                      Foreground="@cell.Foreground"
+                                                      Background="@cell.Background"
+                                                      WidthPx="@CellWidthPx"
+                                                      HeightPx="@CellHeightPx"
+                                                      OnDown="HandleCellDown"
+                                                      OnEnter="HandleCellEnter" />
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel serialized">
+                <div class="serialized-header">
+                    <h2 class="panel-title">Serialized</h2>
+                    <div class="serialized-actions">
+                        <label class="auto-update">
+                            <input type="checkbox" @bind="AutoUpdateString" />
+                            Auto-update on change
+                        </label>
+                        <button class="btn btn-outline-secondary btn-sm"
+                                @onclick="UpdateStringFromCells"
+                                disabled="@autoUpdateString">
+                            Update
+                        </button>
+                    </div>
+                </div>
+                <textarea id="grid-string"
+                          class="grid-string"
+                          spellcheck="false"
+                          value="@gridString"
+                          @onchange="OnStringChanged"></textarea>
+                @if (!string.IsNullOrEmpty(parseError))
+                {
+                    <div class="parse-error">@parseError</div>
+                }
+            </section>
+        </main>
     </div>
 </div>
 
 @code {
-    private enum Tool
+    private enum ToolMode
     {
-        PaintBoth,
-        PaintForeground,
-        PaintBackground,
-        PaintChar,
-        FillBoth,
-        FillForeground,
-        FillBackground,
-        SampleForeground,
-        SampleBackground
+        Paint,
+        Fill,
+        Sample
     }
 
     private enum ReplaceTarget
@@ -178,6 +259,19 @@
         Foreground,
         Background,
         Character
+    }
+
+    private enum TexturizerOption
+    {
+        None,
+        Brightness
+    }
+
+    private enum AspectRatioOption
+    {
+        Console,
+        Square,
+        Custom
     }
 
     private class Cell
@@ -189,16 +283,19 @@
 
     private const int BaseCellSize = 24;
 
-    private int width = 16;
-    private int height = 16;
-    private int pendingWidth = 16;
-    private int pendingHeight = 16;
-    private double cellRatioWidth = 1;
+    private int width = 40;
+    private int height = 20;
+    private int pendingWidth = 40;
+    private int pendingHeight = 20;
+    private double cellRatioWidth = 0.55;
     private double cellRatioHeight = 1;
     private string foreground = "#ffffff";
     private string background = "#000000";
     private string brushChar = "#";
-    private Tool currentTool = Tool.PaintBoth;
+    private ToolMode toolMode = ToolMode.Paint;
+    private bool applyBackground = true;
+    private bool applyForeground = true;
+    private bool applyCharacter = true;
     private bool isDrawing;
 
     private List<List<Cell>> cells = new();
@@ -206,7 +303,7 @@
 
     private string gridString = string.Empty;
     private string? parseError;
-    private bool autoUpdateString;
+    private bool autoUpdateString = true;
 
     private bool AutoUpdateString
     {
@@ -227,12 +324,56 @@
     private string replaceFromColor = "#000000";
     private string replaceFromChar = "#";
 
+    private TexturizerOption selectedTexturizer = TexturizerOption.None;
+
+    private AspectRatioOption selectedAspectRatioValue = AspectRatioOption.Console;
+
+    private AspectRatioOption selectedAspectRatio
+    {
+        get => selectedAspectRatioValue;
+        set
+        {
+            selectedAspectRatioValue = value;
+
+            switch (value)
+            {
+                case AspectRatioOption.Console:
+                    cellRatioWidth = CellAspectRatio.Console.Width;
+                    cellRatioHeight = CellAspectRatio.Console.Height;
+                    break;
+                case AspectRatioOption.Square:
+                    cellRatioWidth = CellAspectRatio.Square.Width;
+                    cellRatioHeight = CellAspectRatio.Square.Height;
+                    break;
+            }
+        }
+    }
+
+    // pan/zoom view state
+    private ElementReference gridWrapper;
+    private double zoom = 1.0;
+    private double panX = 0;
+    private double panY = 0;
+    private bool isPanning;
+    private double lastPointerX;
+    private double lastPointerY;
+
+    private const double MinZoom = 0.1;
+    private const double MaxZoom = 8.0;
+    private const double ZoomStep = 1.2;
+
     private string CellWidthPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioWidth)}px");
     private string CellHeightPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioHeight)}px");
 
     protected override void OnInitialized()
     {
         BuildGrid();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await FitToView();
     }
 
     private void BuildGrid()
@@ -248,6 +389,12 @@
         RebuildPalette();
     }
 
+    private ITexturizer CreateTexturizer() => selectedTexturizer switch
+    {
+        TexturizerOption.Brightness => new BrightnessTexturizer(),
+        _ => new NoTexturizer()
+    };
+
     private async Task LoadImage(InputFileChangeEventArgs e)
     {
         parseError = null;
@@ -261,8 +408,9 @@
             await e.File.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024).CopyToAsync(stream);
             stream.Position = 0;
 
-            var builder = VisualHelper.FromImage(stream, targetSize, aspectRatio, new NoTexturizer());
+            var builder = VisualHelper.FromImage(stream, targetSize, aspectRatio, CreateTexturizer());
             LoadFromBuilder(builder);
+            await FitToView();
         }
         catch (Exception ex)
         {
@@ -288,8 +436,9 @@
             var bytes = await Http.GetByteArrayAsync(imageUrl);
             using var stream = new MemoryStream(bytes);
 
-            var builder = VisualHelper.FromImage(stream, targetSize, aspectRatio, new NoTexturizer());
+            var builder = VisualHelper.FromImage(stream, targetSize, aspectRatio, CreateTexturizer());
             LoadFromBuilder(builder);
+            await FitToView();
         }
         catch (Exception ex)
         {
@@ -328,7 +477,7 @@
         RebuildPalette();
     }
 
-    private void ResizeGrid()
+    private async Task ResizeGrid()
     {
         var newWidth = Math.Clamp(pendingWidth, 1, 100);
         var newHeight = Math.Clamp(pendingHeight, 1, 100);
@@ -353,6 +502,7 @@
         pendingHeight = newHeight;
         cells = newCells;
         RebuildPalette();
+        await FitToView();
     }
 
     private void ClearGrid()
@@ -360,20 +510,25 @@
         BuildGrid();
     }
 
+    private void HandleCellDown((int Row, int Col) pos)
+    {
+        StartPaint(pos.Row, pos.Col);
+    }
+
+    private void HandleCellEnter((int Row, int Col) pos)
+    {
+        PaintIfDrawing(pos.Row, pos.Col);
+    }
+
     private void StartPaint(int row, int col)
     {
-        if (currentTool == Tool.SampleForeground)
+        if (toolMode == ToolMode.Sample)
         {
-            foreground = cells[row][col].Foreground;
-            return;
-        }
-        if (currentTool == Tool.SampleBackground)
-        {
-            background = cells[row][col].Background;
+            SampleCell(row, col);
             return;
         }
 
-        if (currentTool is Tool.FillBoth or Tool.FillForeground or Tool.FillBackground)
+        if (toolMode == ToolMode.Fill)
         {
             FloodFill(row, col);
             return;
@@ -381,6 +536,17 @@
 
         isDrawing = true;
         ApplyBrush(row, col);
+    }
+
+    private void SampleCell(int row, int col)
+    {
+        var cell = cells[row][col];
+        if (applyForeground)
+            foreground = cell.Foreground;
+        if (applyBackground)
+            background = cell.Background;
+        if (applyCharacter)
+            brushChar = cell.Character;
     }
 
     private void PaintIfDrawing(int row, int col)
@@ -391,73 +557,198 @@
 
     private void EndPaint()
     {
+        if (!isDrawing)
+            return;
+
         isDrawing = false;
+
+        // commit palette/string refresh once, at the end of the stroke, instead of per-cell.
+        RebuildPalette();
+    }
+
+    // ----- Pan / Zoom -----
+
+    private sealed class ViewSize
+    {
+        public double Width { get; set; }
+        public double Height { get; set; }
+    }
+
+    private sealed class ViewRect
+    {
+        public double Left { get; set; }
+        public double Top { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+    }
+
+    private void OnViewportMouseDown(MouseEventArgs e)
+    {
+        // middle button, or left button with space/ctrl held, starts panning instead of painting.
+        var panRequested = e.Button == 1 || (e.Button == 0 && (e.CtrlKey || e.ShiftKey));
+        if (!panRequested)
+            return;
+
+        isPanning = true;
+        lastPointerX = e.ClientX;
+        lastPointerY = e.ClientY;
+    }
+
+    private void OnViewportMouseMove(MouseEventArgs e)
+    {
+        if (!isPanning)
+            return;
+
+        panX += e.ClientX - lastPointerX;
+        panY += e.ClientY - lastPointerY;
+        lastPointerX = e.ClientX;
+        lastPointerY = e.ClientY;
+    }
+
+    private void OnViewportMouseUp(MouseEventArgs e)
+    {
+        isPanning = false;
+        EndPaint();
+    }
+
+    private void OnViewportMouseLeave(MouseEventArgs e)
+    {
+        isPanning = false;
+        EndPaint();
+    }
+
+    private async Task OnViewportWheel(WheelEventArgs e)
+    {
+        var factor = e.DeltaY < 0 ? ZoomStep : 1 / ZoomStep;
+        var newZoom = Math.Clamp(zoom * factor, MinZoom, MaxZoom);
+        if (Math.Abs(newZoom - zoom) < 0.0001)
+            return;
+
+        // zoom toward the cursor so the point under the pointer stays put.
+        var rect = await GetViewportRectAsync();
+        var cursorX = e.ClientX - rect.Left;
+        var cursorY = e.ClientY - rect.Top;
+
+        // content coordinate currently under the cursor.
+        var contentX = (cursorX - panX) / zoom;
+        var contentY = (cursorY - panY) / zoom;
+
+        zoom = newZoom;
+        panX = cursorX - contentX * zoom;
+        panY = cursorY - contentY * zoom;
+    }
+
+    private void ZoomIn() => SetZoomAroundCenter(Math.Clamp(zoom * ZoomStep, MinZoom, MaxZoom));
+
+    private void ZoomOut() => SetZoomAroundCenter(Math.Clamp(zoom / ZoomStep, MinZoom, MaxZoom));
+
+    private async void SetZoomAroundCenter(double newZoom)
+    {
+        if (Math.Abs(newZoom - zoom) < 0.0001)
+            return;
+
+        var size = await GetViewportSizeAsync();
+        var centerX = size.Width / 2;
+        var centerY = size.Height / 2;
+
+        var contentX = (centerX - panX) / zoom;
+        var contentY = (centerY - panY) / zoom;
+
+        zoom = newZoom;
+        panX = centerX - contentX * zoom;
+        panY = centerY - contentY * zoom;
+
+        StateHasChanged();
+    }
+
+    private void ResetView()
+    {
+        zoom = 1.0;
+        panX = 0;
+        panY = 0;
+    }
+
+    private async Task FitToView()
+    {
+        var size = await GetViewportSizeAsync();
+        if (size.Width <= 0 || size.Height <= 0)
+            return;
+
+        var contentWidth = width * BaseCellSize * Math.Max(0.1, cellRatioWidth);
+        var contentHeight = height * BaseCellSize * Math.Max(0.1, cellRatioHeight);
+        if (contentWidth <= 0 || contentHeight <= 0)
+            return;
+
+        var scale = Math.Min(size.Width / contentWidth, size.Height / contentHeight);
+        zoom = Math.Clamp(scale, MinZoom, MaxZoom);
+
+        // center the content within the viewport.
+        panX = Math.Max(0, (size.Width - contentWidth * zoom) / 2);
+        panY = Math.Max(0, (size.Height - contentHeight * zoom) / 2);
+
+        StateHasChanged();
+    }
+
+    private async Task<ViewSize> GetViewportSizeAsync()
+    {
+        try
+        {
+            return await JS.InvokeAsync<ViewSize>("canvasView.getViewportSize", gridWrapper);
+        }
+        catch
+        {
+            return new ViewSize();
+        }
+    }
+
+    private async Task<ViewRect> GetViewportRectAsync()
+    {
+        try
+        {
+            return await JS.InvokeAsync<ViewRect>("canvasView.getRect", gridWrapper);
+        }
+        catch
+        {
+            return new ViewRect();
+        }
     }
 
     private void ApplyBrush(int row, int col)
     {
-        var cell = cells[row][col];
-        switch (currentTool)
-        {
-            case Tool.PaintBoth:
-                cell.Foreground = foreground;
-                cell.Background = background;
-                if (!string.IsNullOrEmpty(brushChar))
-                    cell.Character = brushChar;
-                break;
-            case Tool.PaintForeground:
-                cell.Foreground = foreground;
-                break;
-            case Tool.PaintBackground:
-                cell.Background = background;
-                break;
-            case Tool.PaintChar:
-                cell.Character = string.IsNullOrEmpty(brushChar) ? " " : brushChar;
-                break;
-        }
-        RebuildPalette();
+        ApplyChannels(cells[row][col]);
+    }
+
+    private void ApplyChannels(Cell cell)
+    {
+        if (applyForeground)
+            cell.Foreground = foreground;
+        if (applyBackground)
+            cell.Background = background;
+        if (applyCharacter)
+            cell.Character = string.IsNullOrEmpty(brushChar) ? " " : brushChar;
     }
 
     private void FloodFill(int startRow, int startCol)
     {
+        // if no channel is selected there is nothing to fill.
+        if (!applyForeground && !applyBackground && !applyCharacter)
+            return;
+
         var target = cells[startRow][startCol];
         var matchForeground = target.Foreground;
         var matchBackground = target.Background;
+        var matchCharacter = target.Character;
 
-        bool Matches(Cell c) => currentTool switch
+        // a cell is contiguous if every selected channel matches the starting cell.
+        bool Matches(Cell c)
         {
-            Tool.FillForeground => string.Equals(c.Foreground, matchForeground, StringComparison.OrdinalIgnoreCase),
-            Tool.FillBackground => string.Equals(c.Background, matchBackground, StringComparison.OrdinalIgnoreCase),
-            _ => string.Equals(c.Foreground, matchForeground, StringComparison.OrdinalIgnoreCase)
-                 && string.Equals(c.Background, matchBackground, StringComparison.OrdinalIgnoreCase)
-        };
-
-        void Apply(Cell c)
-        {
-            switch (currentTool)
-            {
-                case Tool.FillForeground:
-                    c.Foreground = foreground;
-                    break;
-                case Tool.FillBackground:
-                    c.Background = background;
-                    break;
-                default:
-                    c.Foreground = foreground;
-                    c.Background = background;
-                    break;
-            }
-        }
-
-        // nothing to do if the target already matches the brush selection.
-        if (Matches(cells[startRow][startCol]))
-        {
-            var sameForeground = string.Equals(foreground, matchForeground, StringComparison.OrdinalIgnoreCase);
-            var sameBackground = string.Equals(background, matchBackground, StringComparison.OrdinalIgnoreCase);
-            if ((currentTool == Tool.FillForeground && sameForeground) ||
-                (currentTool == Tool.FillBackground && sameBackground) ||
-                (currentTool == Tool.FillBoth && sameForeground && sameBackground))
-                return;
+            if (applyForeground && !string.Equals(c.Foreground, matchForeground, StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (applyBackground && !string.Equals(c.Background, matchBackground, StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (applyCharacter && !string.Equals(c.Character, matchCharacter, StringComparison.Ordinal))
+                return false;
+            return true;
         }
 
         var visited = new bool[height, width];
@@ -472,7 +763,7 @@
             if (!Matches(cell))
                 continue;
 
-            Apply(cell);
+            ApplyChannels(cell);
 
             foreach (var (dr, dc) in new[] { (-1, 0), (1, 0), (0, -1), (0, 1) })
             {
@@ -491,7 +782,10 @@
 
     private void OnPaletteClick(string color)
     {
-        if (currentTool == Tool.PaintBackground || currentTool == Tool.SampleBackground)
+        // update whichever color channel is active; prefer foreground when both are selected.
+        if (applyForeground)
+            foreground = color;
+        else if (applyBackground)
             background = color;
         else
             foreground = color;

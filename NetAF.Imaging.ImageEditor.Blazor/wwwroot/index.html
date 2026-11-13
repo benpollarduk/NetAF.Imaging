@@ -29,6 +29,24 @@
         <span class="dismiss">🗙</span>
     </div>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>
+        window.canvasView = {
+            // returns the inner (content) size of the viewport element
+            getViewportSize: function (el) {
+                if (!el) return { width: 0, height: 0 };
+                const style = getComputedStyle(el);
+                const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+                const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+                return { width: el.clientWidth - padX, height: el.clientHeight - padY };
+            },
+            // returns the bounding rect of the viewport element
+            getRect: function (el) {
+                if (!el) return { left: 0, top: 0, width: 0, height: 0 };
+                const r = el.getBoundingClientRect();
+                return { left: r.left, top: r.top, width: r.width, height: r.height };
+            }
+        };
+    </script>
 </body>
 
 </html>
