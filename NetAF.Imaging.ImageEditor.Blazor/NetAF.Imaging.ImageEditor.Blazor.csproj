@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\sample-data\**" />
+    <Content Remove="wwwroot\sample-data\**" />
+    <EmbeddedResource Remove="wwwroot\sample-data\**" />
+    <None Remove="wwwroot\sample-data\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.14" PrivateAssets="all" />
     <PackageReference Include="SkiaSharp.Views.Blazor" Version="4.156.0" />
@@ -16,10 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NetAF.Imaging\NetAF.Imaging.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\sample-data\" />
   </ItemGroup>
 
 </Project>
