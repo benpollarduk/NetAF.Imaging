@@ -37,6 +37,30 @@
     cursor: pointer;
 }
 
+.url-input {
+    width: 14rem;
+}
+
+.replace-to {
+    font-family: Consolas, monospace;
+    font-size: 1rem;
+}
+
+.serialized-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.auto-update {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
 .char-input {
     width: 3rem;
     text-align: center;

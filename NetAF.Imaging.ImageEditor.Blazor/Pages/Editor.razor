@@ -6,6 +6,7 @@
 @using NetAF.Targets.Console.Rendering
 @using NetAF.Imaging
 @using NetAF.Imaging.Textures
+@inject HttpClient Http
 
 <PageTitle>Image Editor</PageTitle>
 
@@ -27,6 +28,8 @@
                 Load Image
                 <InputFile OnChange="LoadImage" accept="image/*" style="display:none" />
             </label>
+            <input type="text" placeholder="Image URL" @bind="imageUrl" class="url-input" />
+            <button class="btn btn-outline-primary btn-sm" @onclick="LoadImageFromUrl">Load URL</button>
         </div>
 
         <div class="toolbar-group">
@@ -60,6 +63,41 @@
                 <option value="@Tool.SampleForeground">Sample Foreground</option>
                 <option value="@Tool.SampleBackground">Sample Background</option>
             </select>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <label>Replace</label>
+            <select @bind="replaceTarget" class="tool-select">
+                <option value="@ReplaceTarget.Foreground">Foreground Color</option>
+                <option value="@ReplaceTarget.Background">Background Color</option>
+                <option value="@ReplaceTarget.Character">Character</option>
+            </select>
+
+            @if (replaceTarget == ReplaceTarget.Character)
+            {
+                <label>From</label>
+                <input type="text" maxlength="1" @bind="replaceFromChar" class="char-input" />
+                <label>To</label>
+                <span class="replace-to">'@brushChar'</span>
+            }
+            else if (replaceTarget == ReplaceTarget.Background)
+            {
+                <label>From</label>
+                <input type="color" @bind="replaceFromColor" />
+                <label>To</label>
+                <span class="swatch" style="background:@background"></span>
+            }
+            else
+            {
+                <label>From</label>
+                <input type="color" @bind="replaceFromColor" />
+                <label>To</label>
+                <span class="swatch" style="background:@foreground"></span>
+            }
+
+            <button class="btn btn-outline-primary btn-sm" @onclick="ReplaceAll">Replace All</button>
         </div>
     </div>
 
@@ -97,7 +135,18 @@
     </div>
 
     <div class="serialized">
-        <label for="grid-string">Serialized (GridVisualBuilder)</label>
+        <div class="serialized-header">
+            <label for="grid-string">Serialized (GridVisualBuilder)</label>
+            <label class="auto-update">
+                <input type="checkbox" @bind="AutoUpdateString" />
+                Auto-update on change
+            </label>
+            <button class="btn btn-outline-secondary btn-sm"
+                    @onclick="UpdateStringFromCells"
+                    disabled="@autoUpdateString">
+                Update
+            </button>
+        </div>
         <textarea id="grid-string"
                   class="grid-string"
                   spellcheck="false"
@@ -122,6 +171,13 @@
         FillBackground,
         SampleForeground,
         SampleBackground
+    }
+
+    private enum ReplaceTarget
+    {
+        Foreground,
+        Background,
+        Character
     }
 
     private class Cell
@@ -150,6 +206,26 @@
 
     private string gridString = string.Empty;
     private string? parseError;
+    private bool autoUpdateString;
+
+    private bool AutoUpdateString
+    {
+        get => autoUpdateString;
+        set
+        {
+            autoUpdateString = value;
+
+            // publish an update as soon as auto-update is enabled.
+            if (value)
+                SyncStringFromCells();
+        }
+    }
+
+    private string imageUrl = string.Empty;
+
+    private ReplaceTarget replaceTarget = ReplaceTarget.Foreground;
+    private string replaceFromColor = "#000000";
+    private string replaceFromChar = "#";
 
     private string CellWidthPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioWidth)}px");
     private string CellHeightPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioHeight)}px");
@@ -191,6 +267,33 @@
         catch (Exception ex)
         {
             parseError = $"Could not load image: {ex.Message}";
+        }
+    }
+
+    private async Task LoadImageFromUrl()
+    {
+        parseError = null;
+
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            parseError = "Please enter an image URL.";
+            return;
+        }
+
+        try
+        {
+            var targetSize = new Size(Math.Clamp(pendingWidth, 1, 100), Math.Clamp(pendingHeight, 1, 100));
+            var aspectRatio = new CellAspectRatio(cellRatioWidth, cellRatioHeight);
+
+            var bytes = await Http.GetByteArrayAsync(imageUrl);
+            using var stream = new MemoryStream(bytes);
+
+            var builder = VisualHelper.FromImage(stream, targetSize, aspectRatio, new NoTexturizer());
+            LoadFromBuilder(builder);
+        }
+        catch (Exception ex)
+        {
+            parseError = $"Could not load image from URL: {ex.Message}";
         }
     }
 
@@ -394,6 +497,35 @@
             foreground = color;
     }
 
+    private void ReplaceAll()
+    {
+        foreach (var row in cells)
+        {
+            foreach (var cell in row)
+            {
+                switch (replaceTarget)
+                {
+                    case ReplaceTarget.Foreground:
+                        if (string.Equals(cell.Foreground, replaceFromColor, StringComparison.OrdinalIgnoreCase))
+                            cell.Foreground = foreground;
+                        break;
+                    case ReplaceTarget.Background:
+                        if (string.Equals(cell.Background, replaceFromColor, StringComparison.OrdinalIgnoreCase))
+                            cell.Background = background;
+                        break;
+                    case ReplaceTarget.Character:
+                        var from = string.IsNullOrEmpty(replaceFromChar) ? " " : replaceFromChar;
+                        var to = string.IsNullOrEmpty(brushChar) ? " " : brushChar;
+                        if (string.Equals(cell.Character, from, StringComparison.Ordinal))
+                            cell.Character = to;
+                        break;
+                }
+            }
+        }
+
+        RebuildPalette();
+    }
+
     private void RebuildPalette()
     {
         var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -411,6 +543,12 @@
         }
         palette = set.Take(100).ToList();
 
+        if (autoUpdateString)
+            SyncStringFromCells();
+    }
+
+    private void UpdateStringFromCells()
+    {
         SyncStringFromCells();
     }
 
