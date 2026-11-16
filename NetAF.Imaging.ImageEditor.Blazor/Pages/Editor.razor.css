@@ -205,6 +205,43 @@ input[type="color"] {
 }
 
 /* Palette */
+.palette-target {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.palette-target-label {
+    font-size: 0.8rem;
+    color: var(--text-muted, #666);
+}
+
+.palette-toggle {
+    display: inline-flex;
+    border: 1px solid var(--panel-border, #c3c9d4);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.palette-toggle button {
+    border: none;
+    background: transparent;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--text, #333);
+}
+
+.palette-toggle button + button {
+    border-left: 1px solid var(--panel-border, #c3c9d4);
+}
+
+.palette-toggle button.active {
+    background: var(--accent, #2563eb);
+    color: #fff;
+}
+
 .palette {
     display: flex;
     flex-wrap: wrap;

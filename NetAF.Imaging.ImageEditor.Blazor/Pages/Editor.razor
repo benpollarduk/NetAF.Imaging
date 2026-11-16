@@ -23,11 +23,11 @@
                 <div class="field-row">
                     <div class="field">
                         <label>Width</label>
-                        <input type="number" min="1" max="100" @bind="pendingWidth" class="dim-input" />
+                        <input type="number" min="1" max="@MaxWidth" @bind="pendingWidth" class="dim-input" />
                     </div>
                     <div class="field">
                         <label>Height</label>
-                        <input type="number" min="1" max="100" @bind="pendingHeight" class="dim-input" />
+                        <input type="number" min="1" max="@MaxHeight" @bind="pendingHeight" class="dim-input" />
                     </div>
                 </div>
                 <div class="field">
@@ -92,6 +92,17 @@
 
             <section class="panel">
                 <h2 class="panel-title">Palette <span class="count">@palette.Count</span></h2>
+                <div class="palette-target">
+                    <span class="palette-target-label">Apply to:</span>
+                    <div class="palette-toggle">
+                        <button type="button"
+                                class="@(paletteTarget == PaletteTarget.Foreground ? "active" : null)"
+                                @onclick="() => paletteTarget = PaletteTarget.Foreground">Foreground</button>
+                        <button type="button"
+                                class="@(paletteTarget == PaletteTarget.Background ? "active" : null)"
+                                @onclick="() => paletteTarget = PaletteTarget.Background">Background</button>
+                    </div>
+                </div>
                 <div class="palette">
                     @foreach (var color in palette)
                     {
@@ -271,6 +282,12 @@
         Character
     }
 
+    private enum PaletteTarget
+    {
+        Foreground,
+        Background
+    }
+
     private enum TexturizerOption
     {
         None,
@@ -306,8 +323,8 @@
     private bool applyBackground = true;
     private bool applyForeground = true;
     private bool applyCharacter = true;
+    private PaletteTarget paletteTarget = PaletteTarget.Foreground;
     private bool isDrawing;
-
     private List<List<Cell>> cells = new();
     private List<string> palette = new();
 
@@ -372,6 +389,9 @@
     private const double MaxZoom = 8.0;
     private const double ZoomStep = 1.2;
 
+    private const int MaxWidth = 1000;
+    private const int MaxHeight = 1000;
+
     private string CellWidthPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioWidth)}px");
     private string CellHeightPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioHeight)}px");
 
@@ -411,7 +431,7 @@
 
         try
         {
-            var targetSize = new Size(Math.Clamp(pendingWidth, 1, 100), Math.Clamp(pendingHeight, 1, 100));
+            var targetSize = new Size(Math.Clamp(pendingWidth, 1, MaxWidth), Math.Clamp(pendingHeight, 1, MaxHeight));
             var aspectRatio = new CellAspectRatio(cellRatioWidth, cellRatioHeight);
 
             using var stream = new MemoryStream();
@@ -440,7 +460,7 @@
 
         try
         {
-            var targetSize = new Size(Math.Clamp(pendingWidth, 1, 100), Math.Clamp(pendingHeight, 1, 100));
+            var targetSize = new Size(Math.Clamp(pendingWidth, 1, MaxWidth), Math.Clamp(pendingHeight, 1, MaxHeight));
             var aspectRatio = new CellAspectRatio(cellRatioWidth, cellRatioHeight);
 
             var bytes = await Http.GetByteArrayAsync(imageUrl);
@@ -458,8 +478,8 @@
 
     private void LoadFromBuilder(GridVisualBuilder builder)
     {
-        var newWidth = Math.Clamp(builder.DisplaySize.Width, 1, 100);
-        var newHeight = Math.Clamp(builder.DisplaySize.Height, 1, 100);
+        var newWidth = Math.Clamp(builder.DisplaySize.Width, 1, MaxWidth);
+        var newHeight = Math.Clamp(builder.DisplaySize.Height, 1, MaxHeight);
 
         var newCells = new List<List<Cell>>();
         for (var y = 0; y < newHeight; y++)
@@ -489,8 +509,8 @@
 
     private async Task ResizeGrid()
     {
-        var newWidth = Math.Clamp(pendingWidth, 1, 100);
-        var newHeight = Math.Clamp(pendingHeight, 1, 100);
+        var newWidth = Math.Clamp(pendingWidth, 1, MaxWidth);
+        var newHeight = Math.Clamp(pendingHeight, 1, MaxHeight);
 
         var newCells = new List<List<Cell>>();
         for (var y = 0; y < newHeight; y++)
@@ -801,10 +821,8 @@
 
     private void OnPaletteClick(string color)
     {
-        // update whichever color channel is active; prefer foreground when both are selected.
-        if (applyForeground)
-            foreground = color;
-        else if (applyBackground)
+        // apply the clicked color to whichever channel the toggle targets.
+        if (paletteTarget == PaletteTarget.Background)
             background = color;
         else
             foreground = color;

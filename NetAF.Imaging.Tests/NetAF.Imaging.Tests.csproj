@@ -38,7 +38,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NetAF" Version="10.1.13" />
+    <PackageReference Include="NetAF" Version="10.1.14" />
     <PackageReference Include="SkiaSharp" Version="3.119.0" />
   </ItemGroup>
 
