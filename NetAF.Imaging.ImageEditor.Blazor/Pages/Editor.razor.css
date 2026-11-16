@@ -136,9 +136,15 @@
 }
 
 .char-input {
-    width: 3rem;
+    width: 5rem;
     text-align: center;
     font-family: Consolas, monospace;
+    color: #ffffff;
+}
+
+.char-input::placeholder {
+    color: var(--muted, #999);
+    font-style: italic;
 }
 
 .url-input {

@@ -86,7 +86,7 @@
                 </div>
                 <div class="field">
                     <label>Character</label>
-                    <input type="text" maxlength="1" @bind="brushChar" @bind:event="oninput" class="char-input" />
+                    <input type="text" maxlength="1" placeholder="<none>" @bind="brushChar" @bind:event="oninput" class="char-input" />
                 </div>
             </section>
 
@@ -285,8 +285,8 @@
     private double cellRatioWidth = 0.55;
     private double cellRatioHeight = 1;
     private string foreground = "#ffffff";
-    private string background = "#000000";
-    private string brushChar = " ";
+    private string background = "#ff0000";
+    private string brushChar = "";
     private ToolMode toolMode = ToolMode.Paint;
     private bool applyBackground = true;
     private bool applyForeground = true;
