@@ -152,9 +152,15 @@ main[b-zk968cgkp0] {
 }
 
 .char-input[b-i2c57qz8mg] {
-    width: 3rem;
+    width: 5rem;
     text-align: center;
     font-family: Consolas, monospace;
+    color: #ffffff;
+}
+
+.char-input[b-i2c57qz8mg]::placeholder {
+    color: var(--muted, #999);
+    font-style: italic;
 }
 
 .url-input[b-i2c57qz8mg] {
