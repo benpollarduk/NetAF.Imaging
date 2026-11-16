@@ -1,6 +1,5 @@
 @page "/"
 @page "/editor"
-@using System.Text
 @using System.Collections.Generic
 @using NetAF.Assets
 @using NetAF.Targets.Console.Rendering
@@ -8,6 +7,7 @@
 @using NetAF.Imaging.Textures
 @inject HttpClient Http
 @inject IJSRuntime JS
+@implements IDisposable
 
 <PageTitle>NetAF.Imaging Editor</PageTitle>
 
@@ -191,40 +191,8 @@
                         <button class="btn btn-outline-secondary btn-sm" @onclick="ResetView" title="Reset to 100%">100%</button>
                     </div>
                 </div>
-                <div class="grid-wrapper"
-                     @ref="gridWrapper"
-                     @onmouseup="OnViewportMouseUp"
-                     @onmouseleave="OnViewportMouseLeave"
-                     @onmousemove="OnViewportMouseMove"
-                     @onmousedown="OnViewportMouseDown"
-                     @onwheel="OnViewportWheel"
-                     @onwheel:preventDefault="true">
-                    <div class="grid-transform" style="transform: translate(@(FormattableString.Invariant($"{panX}px, {panY}px"))) scale(@FormattableString.Invariant($"{zoom}")); transform-origin: top left;">
-                        <table class="cell-grid">
-                            <tbody>
-                                @for (var y = 0; y < height; y++)
-                                {
-                                    var row = y;
-                                    <tr>
-                                        @for (var x = 0; x < width; x++)
-                                        {
-                                            var col = x;
-                                            var cell = cells[row][col];
-                                            <CellView Row="row"
-                                                      Col="col"
-                                                      Character="@cell.Character"
-                                                      Foreground="@cell.Foreground"
-                                                      Background="@cell.Background"
-                                                      WidthPx="@CellWidthPx"
-                                                      HeightPx="@CellHeightPx"
-                                                      OnDown="HandleCellDown"
-                                                      OnEnter="HandleCellEnter" />
-                                        }
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="grid-wrapper" @ref="gridWrapper">
+                    <canvas class="grid-canvas" @ref="gridCanvas"></canvas>
                 </div>
             </section>
 
@@ -378,22 +346,25 @@
 
     // pan/zoom view state
     private ElementReference gridWrapper;
+    private ElementReference gridCanvas;
+    private DotNetObjectReference<Editor>? selfRef;
+    private bool canvasReady;
     private double zoom = 1.0;
     private double panX = 0;
     private double panY = 0;
-    private bool isPanning;
-    private double lastPointerX;
-    private double lastPointerY;
 
     private const double MinZoom = 0.1;
     private const double MaxZoom = 8.0;
     private const double ZoomStep = 1.2;
 
-    private const int MaxWidth = 1000;
-    private const int MaxHeight = 1000;
+    private const int MaxWidth = 500;
+    private const int MaxHeight = 500;
 
     private string CellWidthPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioWidth)}px");
     private string CellHeightPx => FormattableString.Invariant($"{BaseCellSize * Math.Max(0.1, cellRatioHeight)}px");
+
+    private double CellPixelWidth => BaseCellSize * Math.Max(0.1, cellRatioWidth);
+    private double CellPixelHeight => BaseCellSize * Math.Max(0.1, cellRatioHeight);
 
     protected override void OnInitialized()
     {
@@ -403,7 +374,18 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+        {
+            selfRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("canvasGrid.initialize", gridCanvas, selfRef);
+            canvasReady = true;
+            await PushGridToCanvas();
             await FitToView();
+        }
+    }
+
+    public void Dispose()
+    {
+        selfRef?.Dispose();
     }
 
     private void BuildGrid()
@@ -440,6 +422,7 @@
 
             var builder = VisualHelper.FromImage(stream, targetSize, aspectRatio, CreateTexturizer());
             LoadFromBuilder(builder);
+            await PushGridToCanvas();
             await FitToView();
         }
         catch (Exception ex)
@@ -468,6 +451,7 @@
 
             var builder = VisualHelper.FromImage(stream, targetSize, aspectRatio, CreateTexturizer());
             LoadFromBuilder(builder);
+            await PushGridToCanvas();
             await FitToView();
         }
         catch (Exception ex)
@@ -532,6 +516,7 @@
         pendingHeight = newHeight;
         cells = newCells;
         RebuildPalette();
+        await PushGridToCanvas();
         await FitToView();
     }
 
@@ -547,6 +532,7 @@
             }
         }
         RebuildPalette();
+        _ = PushGridToCanvas();
     }
 
     private void HandleCellDown((int Row, int Col) pos)
@@ -570,11 +556,13 @@
         if (toolMode == ToolMode.Fill)
         {
             FloodFill(row, col);
+            _ = PushGridToCanvas();
             return;
         }
 
         isDrawing = true;
         ApplyBrush(row, col);
+        _ = PushCellToCanvas(row, col);
     }
 
     private void SampleCell(int row, int col)
@@ -591,7 +579,10 @@
     private void PaintIfDrawing(int row, int col)
     {
         if (isDrawing)
+        {
             ApplyBrush(row, col);
+            _ = PushCellToCanvas(row, col);
+        }
     }
 
     private void EndPaint()
@@ -605,7 +596,7 @@
         RebuildPalette();
     }
 
-    // ----- Pan / Zoom -----
+    // ----- Pan / Zoom / Canvas interop -----
 
     private sealed class ViewSize
     {
@@ -613,75 +604,51 @@
         public double Height { get; set; }
     }
 
-    private sealed class ViewRect
+    [JSInvokable]
+    public void OnCellDown(int row, int col)
     {
-        public double Left { get; set; }
-        public double Top { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-    }
-
-    private void OnViewportMouseDown(MouseEventArgs e)
-    {
-        // middle button, or left button with space/ctrl held, starts panning instead of painting.
-        var panRequested = e.Button == 1 || (e.Button == 0 && (e.CtrlKey || e.ShiftKey));
-        if (!panRequested)
+        if (row < 0 || col < 0 || row >= height || col >= width)
             return;
-
-        isPanning = true;
-        lastPointerX = e.ClientX;
-        lastPointerY = e.ClientY;
+        StartPaint(row, col);
+        StateHasChanged();
     }
 
-    private void OnViewportMouseMove(MouseEventArgs e)
+    [JSInvokable]
+    public void OnCellEnter(int row, int col)
     {
-        if (!isPanning)
+        if (row < 0 || col < 0 || row >= height || col >= width)
             return;
-
-        panX += e.ClientX - lastPointerX;
-        panY += e.ClientY - lastPointerY;
-        lastPointerX = e.ClientX;
-        lastPointerY = e.ClientY;
+        PaintIfDrawing(row, col);
     }
 
-    private void OnViewportMouseUp(MouseEventArgs e)
+    [JSInvokable]
+    public void OnCellUp()
     {
-        isPanning = false;
         EndPaint();
+        StateHasChanged();
     }
 
-    private void OnViewportMouseLeave(MouseEventArgs e)
+    [JSInvokable]
+    public void OnViewChanged(double newPanX, double newPanY, double newZoom)
     {
-        isPanning = false;
-        EndPaint();
-    }
-
-    private async Task OnViewportWheel(WheelEventArgs e)
-    {
-        var factor = e.DeltaY < 0 ? ZoomStep : 1 / ZoomStep;
-        var newZoom = Math.Clamp(zoom * factor, MinZoom, MaxZoom);
-        if (Math.Abs(newZoom - zoom) < 0.0001)
-            return;
-
-        // zoom toward the cursor so the point under the pointer stays put.
-        var rect = await GetViewportRectAsync();
-        var cursorX = e.ClientX - rect.Left;
-        var cursorY = e.ClientY - rect.Top;
-
-        // content coordinate currently under the cursor.
-        var contentX = (cursorX - panX) / zoom;
-        var contentY = (cursorY - panY) / zoom;
-
+        panX = newPanX;
+        panY = newPanY;
         zoom = newZoom;
-        panX = cursorX - contentX * zoom;
-        panY = cursorY - contentY * zoom;
+        StateHasChanged();
     }
 
-    private void ZoomIn() => SetZoomAroundCenter(Math.Clamp(zoom * ZoomStep, MinZoom, MaxZoom));
+    private async Task PushViewToCanvas()
+    {
+        if (!canvasReady)
+            return;
+        await JS.InvokeVoidAsync("canvasGrid.setView", panX, panY, zoom);
+    }
 
-    private void ZoomOut() => SetZoomAroundCenter(Math.Clamp(zoom / ZoomStep, MinZoom, MaxZoom));
+    private void ZoomIn() => _ = SetZoomAroundCenter(Math.Clamp(zoom * ZoomStep, MinZoom, MaxZoom));
 
-    private async void SetZoomAroundCenter(double newZoom)
+    private void ZoomOut() => _ = SetZoomAroundCenter(Math.Clamp(zoom / ZoomStep, MinZoom, MaxZoom));
+
+    private async Task SetZoomAroundCenter(double newZoom)
     {
         if (Math.Abs(newZoom - zoom) < 0.0001)
             return;
@@ -697,14 +664,15 @@
         panX = centerX - contentX * zoom;
         panY = centerY - contentY * zoom;
 
-        StateHasChanged();
+        await PushViewToCanvas();
     }
 
-    private void ResetView()
+    private async Task ResetView()
     {
         zoom = 1.0;
         panX = 0;
         panY = 0;
+        await PushViewToCanvas();
     }
 
     private async Task FitToView()
@@ -713,8 +681,8 @@
         if (size.Width <= 0 || size.Height <= 0)
             return;
 
-        var contentWidth = width * BaseCellSize * Math.Max(0.1, cellRatioWidth);
-        var contentHeight = height * BaseCellSize * Math.Max(0.1, cellRatioHeight);
+        var contentWidth = width * CellPixelWidth;
+        var contentHeight = height * CellPixelHeight;
         if (contentWidth <= 0 || contentHeight <= 0)
             return;
 
@@ -725,14 +693,14 @@
         panX = Math.Max(0, (size.Width - contentWidth * zoom) / 2);
         panY = Math.Max(0, (size.Height - contentHeight * zoom) / 2);
 
-        StateHasChanged();
+        await PushViewToCanvas();
     }
 
     private async Task<ViewSize> GetViewportSizeAsync()
     {
         try
         {
-            return await JS.InvokeAsync<ViewSize>("canvasView.getViewportSize", gridWrapper);
+            return await JS.InvokeAsync<ViewSize>("canvasGrid.getViewportSize");
         }
         catch
         {
@@ -740,16 +708,68 @@
         }
     }
 
-    private async Task<ViewRect> GetViewportRectAsync()
+    // ----- Canvas grid data push -----
+
+    private static byte ParseHexByte(string value, int start)
+        => (byte)((HexVal(value[start]) << 4) | HexVal(value[start + 1]));
+
+    private static int HexVal(char c)
+        => c >= '0' && c <= '9' ? c - '0'
+         : c >= 'a' && c <= 'f' ? c - 'a' + 10
+         : c >= 'A' && c <= 'F' ? c - 'A' + 10
+         : 0;
+
+    private static void WriteRgb(byte[] buffer, int cellIndex, string hex)
     {
-        try
+        var o = cellIndex * 3;
+        var v = string.IsNullOrEmpty(hex) ? "000000" : hex.TrimStart('#');
+        if (v.Length != 6)
+            v = "000000";
+        buffer[o] = ParseHexByte(v, 0);
+        buffer[o + 1] = ParseHexByte(v, 2);
+        buffer[o + 2] = ParseHexByte(v, 4);
+    }
+
+    private async Task PushGridToCanvas()
+    {
+        if (!canvasReady)
+            return;
+
+        var count = width * height;
+        var fg = new byte[count * 3];
+        var bg = new byte[count * 3];
+        var chars = new ushort[count];
+
+        var i = 0;
+        for (var y = 0; y < height; y++)
         {
-            return await JS.InvokeAsync<ViewRect>("canvasView.getRect", gridWrapper);
+            var row = cells[y];
+            for (var x = 0; x < width; x++, i++)
+            {
+                var cell = row[x];
+                WriteRgb(fg, i, cell.Foreground);
+                WriteRgb(bg, i, cell.Background);
+                chars[i] = string.IsNullOrEmpty(cell.Character) ? ' ' : cell.Character[0];
+            }
         }
-        catch
-        {
-            return new ViewRect();
-        }
+
+        await JS.InvokeVoidAsync("canvasGrid.setGrid", width, height, CellPixelWidth, CellPixelHeight, fg, bg, chars);
+    }
+
+    private async Task PushCellToCanvas(int row, int col)
+    {
+        if (!canvasReady)
+            return;
+
+        var cell = cells[row][col];
+        var fv = (string.IsNullOrEmpty(cell.Foreground) ? "000000" : cell.Foreground.TrimStart('#')).PadRight(6, '0');
+        var bv = (string.IsNullOrEmpty(cell.Background) ? "000000" : cell.Background.TrimStart('#')).PadRight(6, '0');
+        var charCode = string.IsNullOrEmpty(cell.Character) ? ' ' : cell.Character[0];
+
+        await JS.InvokeVoidAsync("canvasGrid.setCell", row, col,
+            ParseHexByte(fv, 0), ParseHexByte(fv, 2), ParseHexByte(fv, 4),
+            ParseHexByte(bv, 0), ParseHexByte(bv, 2), ParseHexByte(bv, 4),
+            (int)charCode);
     }
 
     private void ApplyBrush(int row, int col)
@@ -855,6 +875,7 @@
         }
 
         RebuildPalette();
+        _ = PushGridToCanvas();
     }
 
     private void RebuildPalette()
@@ -946,6 +967,7 @@
         }
 
         LoadFromBuilder(builder);
+        await PushGridToCanvas();
         await FitToView();
     }
 
