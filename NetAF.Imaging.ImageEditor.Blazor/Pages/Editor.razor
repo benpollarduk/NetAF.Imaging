@@ -184,6 +184,8 @@
                 <div class="canvas-header">
                     <h2 class="panel-title">Canvas</h2>
                     <div class="zoom-controls">
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="Undo" disabled="@(!CanUndo)" title="Undo (Ctrl+Z)">Undo</button>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="Redo" disabled="@(!CanRedo)" title="Redo (Ctrl+Y)">Redo</button>
                         <button class="btn btn-outline-secondary btn-sm" @onclick="ZoomOut" title="Zoom out">&minus;</button>
                         <span class="zoom-level">@($"{zoom * 100:0}%")</span>
                         <button class="btn btn-outline-secondary btn-sm" @onclick="ZoomIn" title="Zoom in">+</button>
@@ -295,6 +297,14 @@
     private bool isDrawing;
     private List<List<Cell>> cells = new();
     private List<string> palette = new();
+
+    // undo/redo history. each entry is a full snapshot of the grid.
+    private const int MaxHistory = 20;
+    private readonly LinkedList<List<List<Cell>>> undoHistory = new();
+    private readonly LinkedList<List<List<Cell>>> redoHistory = new();
+
+    private bool CanUndo => undoHistory.Count > 0;
+    private bool CanRedo => redoHistory.Count > 0;
 
     private string gridString = string.Empty;
     private string? parseError;
@@ -496,6 +506,8 @@
         var newWidth = Math.Clamp(pendingWidth, 1, MaxWidth);
         var newHeight = Math.Clamp(pendingHeight, 1, MaxHeight);
 
+        SaveUndoSnapshot();
+
         var newCells = new List<List<Cell>>();
         for (var y = 0; y < newHeight; y++)
         {
@@ -522,6 +534,7 @@
 
     private void ClearGrid()
     {
+        SaveUndoSnapshot();
         foreach (var row in cells)
         {
             foreach (var cell in row)
@@ -555,12 +568,15 @@
 
         if (toolMode == ToolMode.Fill)
         {
+            SaveUndoSnapshot();
             FloodFill(row, col);
             _ = PushGridToCanvas();
             return;
         }
 
         isDrawing = true;
+        // snapshot the grid once at the start of a paint stroke.
+        SaveUndoSnapshot();
         ApplyBrush(row, col);
         _ = PushCellToCanvas(row, col);
     }
@@ -625,6 +641,20 @@
     public void OnCellUp()
     {
         EndPaint();
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnUndoKey()
+    {
+        await Undo();
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnRedoKey()
+    {
+        await Redo();
         StateHasChanged();
     }
 
@@ -787,6 +817,82 @@
             cell.Character = string.IsNullOrEmpty(brushChar) ? " " : brushChar;
     }
 
+    // ----- Undo / Redo -----
+
+    private static List<List<Cell>> CloneCells(List<List<Cell>> source)
+    {
+        var clone = new List<List<Cell>>(source.Count);
+        foreach (var row in source)
+        {
+            var newRow = new List<Cell>(row.Count);
+            foreach (var cell in row)
+            {
+                newRow.Add(new Cell
+                {
+                    Foreground = cell.Foreground,
+                    Background = cell.Background,
+                    Character = cell.Character
+                });
+            }
+            clone.Add(newRow);
+        }
+        return clone;
+    }
+
+    // capture the current grid state so it can be restored by Undo. call this
+    // before any mutating operation (paint stroke, fill, clear, replace, resize).
+    private void SaveUndoSnapshot()
+    {
+        undoHistory.AddLast(CloneCells(cells));
+        while (undoHistory.Count > MaxHistory)
+            undoHistory.RemoveFirst();
+
+        // any new edit invalidates the redo stack.
+        redoHistory.Clear();
+    }
+
+    private async Task Undo()
+    {
+        if (!CanUndo)
+            return;
+
+        redoHistory.AddLast(CloneCells(cells));
+        while (redoHistory.Count > MaxHistory)
+            redoHistory.RemoveFirst();
+
+        cells = undoHistory.Last!.Value;
+        undoHistory.RemoveLast();
+
+        width = cells.Count > 0 ? cells[0].Count : 0;
+        height = cells.Count;
+        pendingWidth = width;
+        pendingHeight = height;
+
+        RebuildPalette();
+        await PushGridToCanvas();
+    }
+
+    private async Task Redo()
+    {
+        if (!CanRedo)
+            return;
+
+        undoHistory.AddLast(CloneCells(cells));
+        while (undoHistory.Count > MaxHistory)
+            undoHistory.RemoveFirst();
+
+        cells = redoHistory.Last!.Value;
+        redoHistory.RemoveLast();
+
+        width = cells.Count > 0 ? cells[0].Count : 0;
+        height = cells.Count;
+        pendingWidth = width;
+        pendingHeight = height;
+
+        RebuildPalette();
+        await PushGridToCanvas();
+    }
+
     private void FloodFill(int startRow, int startCol)
     {
         // if no channel is selected there is nothing to fill.
@@ -850,6 +956,7 @@
 
     private void ReplaceAll()
     {
+        SaveUndoSnapshot();
         foreach (var row in cells)
         {
             foreach (var cell in row)

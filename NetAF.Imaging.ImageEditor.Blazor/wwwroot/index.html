@@ -288,6 +288,25 @@
                         window.addEventListener("resize", requestDraw);
                         state._resizeHooked = true;
                     }
+                    if (!state._keyHooked) {
+                        window.addEventListener("keydown", function (e) {
+                            // ignore shortcuts while typing in an input/textarea.
+                            const t = e.target;
+                            if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable))
+                                return;
+                            if (!(e.ctrlKey || e.metaKey))
+                                return;
+                            const key = e.key.toLowerCase();
+                            if (key === "z" && !e.shiftKey) {
+                                e.preventDefault();
+                                state.dotnet.invokeMethodAsync("OnUndoKey");
+                            } else if (key === "y" || (key === "z" && e.shiftKey)) {
+                                e.preventDefault();
+                                state.dotnet.invokeMethodAsync("OnRedoKey");
+                            }
+                        });
+                        state._keyHooked = true;
+                    }
                     requestDraw();
                 },
                 setGrid: function (cols, rows, cellW, cellH, fg, bg, chars) {
