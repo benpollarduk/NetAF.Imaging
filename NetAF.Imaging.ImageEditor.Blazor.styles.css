@@ -13,32 +13,22 @@ main[b-zk968cgkp0] {
     user-select: none;
     z-index: 1000;
 }
-/* /Pages/CellView.razor.rz.scp.css */
-.grid-cell[b-5fmt50nmv3] {
-    box-sizing: border-box;
-    text-align: center;
-    vertical-align: middle;
-    border: 1px solid rgba(128, 128, 128, 0.25);
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 1rem;
-    line-height: 1;
-    cursor: crosshair;
-    padding: 0;
-    overflow: hidden;
-    white-space: nowrap;
-}
 /* /Pages/Editor.razor.rz.scp.css */
 .editor-root[b-i2c57qz8mg] {
-    --panel-bg: #ffffff;
-    --panel-border: #e3e6ea;
+    --panel-bg: #1e2228;
+    --panel-border: #343a44;
     --panel-radius: 10px;
-    --accent: #0d6efd;
-    --page-bg: #f4f6f9;
-    --title-color: #333a44;
-    --label-color: #5a6572;
+    --accent: #3b82f6;
+    --page-bg: #14171c;
+    --title-color: #e6e9ee;
+    --label-color: #9aa4b2;
+    --text: #e6e9ee;
+    --text-muted: #9aa4b2;
+    --input-bg: #262b33;
 
     padding: 1rem 1.25rem 2rem;
     background: var(--page-bg);
+    color: var(--text);
     min-height: 100vh;
     box-sizing: border-box;
 }
@@ -76,7 +66,7 @@ main[b-zk968cgkp0] {
     border-radius: var(--panel-radius);
     padding: 0.9rem 1rem 1rem;
     margin-bottom: 1rem;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .panel-title[b-i2c57qz8mg] {
@@ -179,6 +169,8 @@ textarea[b-i2c57qz8mg] {
     border-radius: 6px;
     padding: 0.3rem 0.45rem;
     font-size: 0.85rem;
+    background: var(--input-bg);
+    color: var(--text);
 }
 
 input[type="color"][b-i2c57qz8mg] {
@@ -231,10 +223,47 @@ input[type="color"][b-i2c57qz8mg] {
     padding: 0.2rem 0.5rem;
     border: 1px solid var(--panel-border);
     border-radius: 6px;
-    background: #f8f9fa;
+    background: var(--input-bg);
 }
 
 /* Palette */
+.palette-target[b-i2c57qz8mg] {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.palette-target-label[b-i2c57qz8mg] {
+    font-size: 0.8rem;
+    color: var(--text-muted, #666);
+}
+
+.palette-toggle[b-i2c57qz8mg] {
+    display: inline-flex;
+    border: 1px solid var(--panel-border, #c3c9d4);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.palette-toggle button[b-i2c57qz8mg] {
+    border: none;
+    background: transparent;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--text, #333);
+}
+
+.palette-toggle button + button[b-i2c57qz8mg] {
+    border-left: 1px solid var(--panel-border, #c3c9d4);
+}
+
+.palette-toggle button.active[b-i2c57qz8mg] {
+    background: var(--accent, #2563eb);
+    color: #fff;
+}
+
 .palette[b-i2c57qz8mg] {
     display: flex;
     flex-wrap: wrap;
@@ -266,26 +295,16 @@ input[type="color"][b-i2c57qz8mg] {
     height: 70vh;
     border: 1px solid var(--panel-border);
     border-radius: 8px;
-    background:
-        linear-gradient(45deg, #eceff3 25%, transparent 25%) 0 0 / 16px 16px,
-        linear-gradient(-45deg, #eceff3 25%, transparent 25%) 0 8px / 16px 16px,
-        linear-gradient(45deg, transparent 75%, #eceff3 75%) 8px -8px / 16px 16px,
-        linear-gradient(-45deg, transparent 75%, #eceff3 75%) -8px 0 / 16px 16px,
-        #ffffff;
-    padding: 0.5rem;
+    background: #1e1e1e;
     width: 100%;
-    cursor: grab;
 }
 
-.grid-wrapper:active[b-i2c57qz8mg] {
-    cursor: grabbing;
-}
-
-.grid-transform[b-i2c57qz8mg] {
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
-    will-change: transform;
+.grid-canvas[b-i2c57qz8mg] {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: crosshair;
 }
 
 .canvas-header[b-i2c57qz8mg] {
@@ -307,13 +326,6 @@ input[type="color"][b-i2c57qz8mg] {
     text-align: center;
     font-size: 0.85rem;
     color: var(--text-muted, #555);
-}
-
-.cell-grid[b-i2c57qz8mg] {
-    border-collapse: collapse;
-    user-select: none;
-    table-layout: fixed;
-    width: auto;
 }
 
 /* Serialized */
@@ -351,12 +363,14 @@ input[type="color"][b-i2c57qz8mg] {
     margin-top: 0.75rem;
     font-family: Consolas, monospace;
     font-size: 0.8rem;
-    white-space: pre;
-    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .parse-error[b-i2c57qz8mg] {
-    color: #b00020;
+    color: #ff6b6b;
     font-size: 0.85rem;
     margin-top: 0.5rem;
 }

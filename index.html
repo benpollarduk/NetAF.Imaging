@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NetAF.Imaging.ImageEditor.Blazor</title>
     <base href="/NetAF.Imaging/" />
-    <link href="_framework/dotnet.lzrhm8sbdu.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-8R1tjndUI7Alk8KnvKYhz24Nb9I0AjSCntkPQmloYcA=" />
+    <link href="_framework/dotnet.qfv1x7gwmu.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-mm1PQUeEzHCufUFmTm1UPLnqUAoaiVyWrY7sTYOUNTY=" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="icon.png" />
@@ -17,18 +17,18 @@
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.w3qd1tpl0e.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.lzrhm8sbdu.js",
     "./_framework/dotnet.native.js": "./_framework/dotnet.native.qm0ly00wu6.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.qfv1x7gwmu.js",
     "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.v2rwe8u38b.js"
   },
   "scopes": {},
   "integrity": {
     "./_framework/blazor.webassembly.js": "sha256-lDXsDYFgm62F+YUvxES7IOTCXYpiHpU3uR45YdC6mq4=",
     "./_framework/blazor.webassembly.w3qd1tpl0e.js": "sha256-lDXsDYFgm62F+YUvxES7IOTCXYpiHpU3uR45YdC6mq4=",
-    "./_framework/dotnet.js": "sha256-8R1tjndUI7Alk8KnvKYhz24Nb9I0AjSCntkPQmloYcA=",
-    "./_framework/dotnet.lzrhm8sbdu.js": "sha256-8R1tjndUI7Alk8KnvKYhz24Nb9I0AjSCntkPQmloYcA=",
+    "./_framework/dotnet.js": "sha256-mm1PQUeEzHCufUFmTm1UPLnqUAoaiVyWrY7sTYOUNTY=",
     "./_framework/dotnet.native.js": "sha256-jqe7Nj08fafCkO3FyUeadI7V+0UYDMA1jbO2Txfjt7o=",
     "./_framework/dotnet.native.qm0ly00wu6.js": "sha256-jqe7Nj08fafCkO3FyUeadI7V+0UYDMA1jbO2Txfjt7o=",
+    "./_framework/dotnet.qfv1x7gwmu.js": "sha256-mm1PQUeEzHCufUFmTm1UPLnqUAoaiVyWrY7sTYOUNTY=",
     "./_framework/dotnet.runtime.js": "sha256-6SBqDbLLy460Bxd7wMZoiO97hZfLTuF+HRhWT3elS7U=",
     "./_framework/dotnet.runtime.v2rwe8u38b.js": "sha256-6SBqDbLLy460Bxd7wMZoiO97hZfLTuF+HRhWT3elS7U="
   }
@@ -87,6 +87,261 @@
                 }
             }
         };
+
+        // Canvas-based grid renderer. The .NET side owns the grid data and editing
+        // logic; this module only draws visible cells and reports pointer hits.
+        window.canvasGrid = (function () {
+            const state = {
+                canvas: null,
+                ctx: null,
+                dotnet: null,
+                cols: 0,
+                rows: 0,
+                cellW: 24,
+                cellH: 24,
+                fg: null,        // Uint8Array, 3 bytes per cell (RGB)
+                bg: null,        // Uint8Array, 3 bytes per cell (RGB)
+                chars: "",       // one UTF-16 char per cell
+                panX: 0,
+                panY: 0,
+                zoom: 1,
+                dpr: 1,
+                drawQueued: false,
+                isPointerDown: false,
+                lastCell: { row: -1, col: -1 }
+            };
+
+            function rgb(arr, i) {
+                const o = i * 3;
+                return "rgb(" + arr[o] + "," + arr[o + 1] + "," + arr[o + 2] + ")";
+            }
+
+            function resizeBackingStore() {
+                const c = state.canvas;
+                if (!c) return;
+                const rect = c.getBoundingClientRect();
+                state.dpr = window.devicePixelRatio || 1;
+                const w = Math.max(1, Math.round(rect.width * state.dpr));
+                const h = Math.max(1, Math.round(rect.height * state.dpr));
+                if (c.width !== w || c.height !== h) {
+                    c.width = w;
+                    c.height = h;
+                }
+            }
+
+            function requestDraw() {
+                if (state.drawQueued) return;
+                state.drawQueued = true;
+                requestAnimationFrame(function () {
+                    state.drawQueued = false;
+                    draw();
+                });
+            }
+
+            function draw() {
+                const ctx = state.ctx;
+                if (!ctx) return;
+
+                resizeBackingStore();
+
+                const dpr = state.dpr;
+                const viewW = state.canvas.width;
+                const viewH = state.canvas.height;
+
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.fillStyle = "#1e1e1e";
+                ctx.fillRect(0, 0, viewW, viewH);
+
+                if (!state.fg || !state.bg || state.cols === 0 || state.rows === 0)
+                    return;
+
+                const cw = state.cellW * state.zoom * dpr;
+                const ch = state.cellH * state.zoom * dpr;
+                const ox = state.panX * dpr;
+                const oy = state.panY * dpr;
+
+                // visible cell range (cull everything off-screen).
+                let c0 = Math.floor((0 - ox) / cw);
+                let r0 = Math.floor((0 - oy) / ch);
+                let c1 = Math.ceil((viewW - ox) / cw);
+                let r1 = Math.ceil((viewH - oy) / ch);
+                c0 = Math.max(0, c0); r0 = Math.max(0, r0);
+                c1 = Math.min(state.cols, c1); r1 = Math.min(state.rows, r1);
+
+                // backgrounds
+                for (let r = r0; r < r1; r++) {
+                    for (let c = c0; c < c1; c++) {
+                        const i = r * state.cols + c;
+                        ctx.fillStyle = rgb(state.bg, i);
+                        const x = Math.floor(ox + c * cw);
+                        const y = Math.floor(oy + r * ch);
+                        const x2 = Math.ceil(ox + (c + 1) * cw);
+                        const y2 = Math.ceil(oy + (r + 1) * ch);
+                        ctx.fillRect(x, y, x2 - x, y2 - y);
+                    }
+                }
+
+                // characters (only when cells are large enough to be legible).
+                if (ch >= 7 * dpr && state.chars) {
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    const fontPx = Math.floor(ch * 0.8);
+                    ctx.font = fontPx + "px 'Times New Roman', serif";
+                    for (let r = r0; r < r1; r++) {
+                        for (let c = c0; c < c1; c++) {
+                            const i = r * state.cols + c;
+                            const ch0 = state.chars[i];
+                            if (ch0 === 32 || ch0 === 0) continue; // skip spaces / empty
+                            ctx.fillStyle = rgb(state.fg, i);
+                            const x = ox + (c + 0.5) * cw;
+                            const y = oy + (r + 0.5) * ch;
+                            ctx.fillText(String.fromCharCode(ch0), x, y);
+                        }
+                    }
+                }
+            }
+
+            function cellFromEvent(e) {
+                const rect = state.canvas.getBoundingClientRect();
+                const px = e.clientX - rect.left;
+                const py = e.clientY - rect.top;
+                const col = Math.floor((px - state.panX) / (state.cellW * state.zoom));
+                const row = Math.floor((py - state.panY) / (state.cellH * state.zoom));
+                if (col < 0 || col >= state.cols || row < 0 || row >= state.rows)
+                    return null;
+                return { row: row, col: col };
+            }
+
+            function onPointerDown(e) {
+                const panRequested = e.button === 1 || (e.button === 0 && (e.ctrlKey || e.shiftKey));
+                if (panRequested) {
+                    e.preventDefault();
+                    startPan(e);
+                    return;
+                }
+                if (e.button !== 0) return;
+                const cell = cellFromEvent(e);
+                if (!cell) return;
+                state.isPointerDown = true;
+                state.lastCell = cell;
+                state.canvas.setPointerCapture(e.pointerId);
+                state.dotnet.invokeMethodAsync("OnCellDown", cell.row, cell.col);
+            }
+
+            function onPointerMove(e) {
+                if (!state.isPointerDown) return;
+                const cell = cellFromEvent(e);
+                if (!cell) return;
+                if (cell.row === state.lastCell.row && cell.col === state.lastCell.col) return;
+                state.lastCell = cell;
+                state.dotnet.invokeMethodAsync("OnCellEnter", cell.row, cell.col);
+            }
+
+            function onPointerUp(e) {
+                if (!state.isPointerDown) return;
+                state.isPointerDown = false;
+                state.lastCell = { row: -1, col: -1 };
+                state.dotnet.invokeMethodAsync("OnCellUp");
+            }
+
+            // --- panning (middle button / ctrl / shift) ---
+            let panning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+            function startPan(e) {
+                panning = true;
+                panStartX = e.clientX;
+                panStartY = e.clientY;
+                panOrigX = state.panX;
+                panOrigY = state.panY;
+                state.canvas.setPointerCapture(e.pointerId);
+            }
+            function onPanMove(e) {
+                if (!panning) return;
+                state.panX = panOrigX + (e.clientX - panStartX);
+                state.panY = panOrigY + (e.clientY - panStartY);
+                requestDraw();
+                notifyView();
+            }
+            function onPanEnd() {
+                panning = false;
+            }
+
+            function onWheel(e) {
+                e.preventDefault();
+                const step = 1.2;
+                const factor = e.deltaY < 0 ? step : 1 / step;
+                const newZoom = Math.min(8, Math.max(0.1, state.zoom * factor));
+                if (Math.abs(newZoom - state.zoom) < 1e-4) return;
+                const rect = state.canvas.getBoundingClientRect();
+                const cx = e.clientX - rect.left;
+                const cy = e.clientY - rect.top;
+                const contentX = (cx - state.panX) / state.zoom;
+                const contentY = (cy - state.panY) / state.zoom;
+                state.zoom = newZoom;
+                state.panX = cx - contentX * state.zoom;
+                state.panY = cy - contentY * state.zoom;
+                requestDraw();
+                notifyView();
+            }
+
+            function notifyView() {
+                if (state.dotnet)
+                    state.dotnet.invokeMethodAsync("OnViewChanged", state.panX, state.panY, state.zoom);
+            }
+
+            return {
+                initialize: function (canvas, dotnet) {
+                    state.canvas = canvas;
+                    state.ctx = canvas.getContext("2d");
+                    state.dotnet = dotnet;
+
+                    canvas.addEventListener("pointerdown", onPointerDown);
+                    canvas.addEventListener("pointermove", function (e) { onPanMove(e); onPointerMove(e); });
+                    canvas.addEventListener("pointerup", function (e) { onPanEnd(e); onPointerUp(e); });
+                    canvas.addEventListener("pointerleave", function (e) { onPanEnd(e); });
+                    canvas.addEventListener("pointercancel", function (e) { onPanEnd(e); onPointerUp(e); });
+                    canvas.addEventListener("wheel", onWheel, { passive: false });
+                    canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+                    if (!state._resizeHooked) {
+                        window.addEventListener("resize", requestDraw);
+                        state._resizeHooked = true;
+                    }
+                    requestDraw();
+                },
+                setGrid: function (cols, rows, cellW, cellH, fg, bg, chars) {
+                    state.cols = cols;
+                    state.rows = rows;
+                    state.cellW = cellW;
+                    state.cellH = cellH;
+                    state.fg = fg;           // Uint8Array
+                    state.bg = bg;           // Uint8Array
+                    state.chars = chars;     // Uint16Array (char codes)
+                    requestDraw();
+                },
+                setCell: function (row, col, fr, fgc, fb, br, bgc, bb, charCode) {
+                    const i = row * state.cols + col;
+                    if (i < 0 || !state.fg) return;
+                    const o = i * 3;
+                    state.fg[o] = fr; state.fg[o + 1] = fgc; state.fg[o + 2] = fb;
+                    state.bg[o] = br; state.bg[o + 1] = bgc; state.bg[o + 2] = bb;
+                    if (charCode >= 0 && state.chars)
+                        state.chars[i] = charCode;
+                    requestDraw();
+                },
+                setView: function (panX, panY, zoom) {
+                    state.panX = panX;
+                    state.panY = panY;
+                    state.zoom = zoom;
+                    requestDraw();
+                },
+                getViewportSize: function () {
+                    const c = state.canvas;
+                    if (!c) return { width: 0, height: 0 };
+                    const r = c.getBoundingClientRect();
+                    return { width: r.width, height: r.height };
+                }
+            };
+        })();
     </script>
 </body>
 
