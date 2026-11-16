@@ -1,14 +1,18 @@
 .editor-root {
-    --panel-bg: #ffffff;
-    --panel-border: #e3e6ea;
+    --panel-bg: #1e2228;
+    --panel-border: #343a44;
     --panel-radius: 10px;
-    --accent: #0d6efd;
-    --page-bg: #f4f6f9;
-    --title-color: #333a44;
-    --label-color: #5a6572;
+    --accent: #3b82f6;
+    --page-bg: #14171c;
+    --title-color: #e6e9ee;
+    --label-color: #9aa4b2;
+    --text: #e6e9ee;
+    --text-muted: #9aa4b2;
+    --input-bg: #262b33;
 
     padding: 1rem 1.25rem 2rem;
     background: var(--page-bg);
+    color: var(--text);
     min-height: 100vh;
     box-sizing: border-box;
 }
@@ -46,7 +50,7 @@
     border-radius: var(--panel-radius);
     padding: 0.9rem 1rem 1rem;
     margin-bottom: 1rem;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .panel-title {
@@ -149,6 +153,8 @@ textarea {
     border-radius: 6px;
     padding: 0.3rem 0.45rem;
     font-size: 0.85rem;
+    background: var(--input-bg);
+    color: var(--text);
 }
 
 input[type="color"] {
@@ -201,7 +207,7 @@ input[type="color"] {
     padding: 0.2rem 0.5rem;
     border: 1px solid var(--panel-border);
     border-radius: 6px;
-    background: #f8f9fa;
+    background: var(--input-bg);
 }
 
 /* Palette */
@@ -348,7 +354,7 @@ input[type="color"] {
 }
 
 .parse-error {
-    color: #b00020;
+    color: #ff6b6b;
     font-size: 0.85rem;
     margin-top: 0.5rem;
 }
