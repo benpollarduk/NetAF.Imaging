@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NetAF.Imaging.ImageEditor.Blazor</title>
     <base href="/NetAF.Imaging/" />
-    <link href="_framework/dotnet.4zj5ptiith.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-YOHZmHRtF9cYolfnq35MMkWiOIhTxbFKGolwwR4hs84=" />
+    <link href="_framework/dotnet.mo1ivljk9e.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-BvwiLo5i+Y8zMAV8jPd3KvZwAbRkW8N7PX6FQZebYbA=" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="icon.png" />
@@ -17,7 +17,7 @@
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.w3qd1tpl0e.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.4zj5ptiith.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.mo1ivljk9e.js",
     "./_framework/dotnet.native.js": "./_framework/dotnet.native.qm0ly00wu6.js",
     "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.v2rwe8u38b.js"
   },
@@ -25,8 +25,8 @@
   "integrity": {
     "./_framework/blazor.webassembly.js": "sha256-lDXsDYFgm62F+YUvxES7IOTCXYpiHpU3uR45YdC6mq4=",
     "./_framework/blazor.webassembly.w3qd1tpl0e.js": "sha256-lDXsDYFgm62F+YUvxES7IOTCXYpiHpU3uR45YdC6mq4=",
-    "./_framework/dotnet.4zj5ptiith.js": "sha256-YOHZmHRtF9cYolfnq35MMkWiOIhTxbFKGolwwR4hs84=",
-    "./_framework/dotnet.js": "sha256-YOHZmHRtF9cYolfnq35MMkWiOIhTxbFKGolwwR4hs84=",
+    "./_framework/dotnet.js": "sha256-BvwiLo5i+Y8zMAV8jPd3KvZwAbRkW8N7PX6FQZebYbA=",
+    "./_framework/dotnet.mo1ivljk9e.js": "sha256-BvwiLo5i+Y8zMAV8jPd3KvZwAbRkW8N7PX6FQZebYbA=",
     "./_framework/dotnet.native.js": "sha256-jqe7Nj08fafCkO3FyUeadI7V+0UYDMA1jbO2Txfjt7o=",
     "./_framework/dotnet.native.qm0ly00wu6.js": "sha256-jqe7Nj08fafCkO3FyUeadI7V+0UYDMA1jbO2Txfjt7o=",
     "./_framework/dotnet.runtime.js": "sha256-6SBqDbLLy460Bxd7wMZoiO97hZfLTuF+HRhWT3elS7U=",
@@ -305,6 +305,25 @@
                     if (!state._resizeHooked) {
                         window.addEventListener("resize", requestDraw);
                         state._resizeHooked = true;
+                    }
+                    if (!state._keyHooked) {
+                        window.addEventListener("keydown", function (e) {
+                            // ignore shortcuts while typing in an input/textarea.
+                            const t = e.target;
+                            if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable))
+                                return;
+                            if (!(e.ctrlKey || e.metaKey))
+                                return;
+                            const key = e.key.toLowerCase();
+                            if (key === "z" && !e.shiftKey) {
+                                e.preventDefault();
+                                state.dotnet.invokeMethodAsync("OnUndoKey");
+                            } else if (key === "y" || (key === "z" && e.shiftKey)) {
+                                e.preventDefault();
+                                state.dotnet.invokeMethodAsync("OnRedoKey");
+                            }
+                        });
+                        state._keyHooked = true;
                     }
                     requestDraw();
                 },
