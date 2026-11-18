@@ -47,7 +47,7 @@ jobs:
     - name: Update version in Blazor app
       run: |
         cd "${{ github.workspace }}"
-        $filePath = "NetAF.Imaging.ImageEditor.Blazor/NetAF.Imaging.ImageEditor.Blazor.csproj"
+        $filePath = ".\NetAF.Imaging.ImageEditor.Blazor\NetAF.Imaging.ImageEditor.Blazor.csproj"
         $newVersion = "${{ github.event.inputs.ver }}"
         $content = Get-Content $filePath
         $content -replace '<Version>0.0.0</Version>', "<Version>${newVersion}</Version>" | Set-Content -Path $filePath
@@ -58,9 +58,9 @@ jobs:
 
     - name: Publish Blazor app
       run: |
-        cd NetAF.Imaging.ImageEditor.Blazor
+        cd .\NetAF.Imaging.ImageEditor.Blazor
         dotnet publish -c Release -o dist
-      shell: bash
+      shell: pwsh
 
     - name: Create temporary directory for Blazor app
       run: mkdir "${{ runner.temp }}\blazor"
@@ -84,7 +84,7 @@ jobs:
     - name: Copy Blazor files
       run: |
         cd "${{ runner.temp }}\blazor"
-        cp -r ${{ github.workspace }}\NetAF.Imaging.ImageEditor.Blazor\dist\wwwroot\* . -Force
+        Copy-Item -Path "${{ github.workspace }}\NetAF.Imaging.ImageEditor.Blazor\dist\wwwroot\*" -Destination . -Recurse -Force
       
     - name: Update the base in index.html
       run: |

@@ -20,7 +20,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     
@@ -48,23 +48,29 @@ jobs:
       run: dotnet restore
 
     - name: Update version and release notes in csproj file
+      shell: pwsh
       run: |
         echo "Version: ${{ inputs.ver }}"
         echo "Release notes: ${{ inputs.release-notes }}"
-        
+
+        $csprojPath = ".\NetAF.Imaging\NetAF.Imaging.csproj"
+        $content = Get-Content $csprojPath -Raw
+
         # update the .csproj file with the input version
-        sed -i "s/<Version>.*<\/Version>/<Version>${{ inputs.ver }}<\/Version>/" NetAF.Imaging/NetAF.Imaging.csproj
-        sed -i "s/<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>${{ inputs.ver }}.0<\/AssemblyVersion>/" NetAF.Imaging/NetAF.Imaging.csproj
-        sed -i "s/<FileVersion>.*<\/FileVersion>/<FileVersion>${{ inputs.ver }}<\/FileVersion>/" NetAF.Imaging/NetAF.Imaging.csproj
+        $content = $content -replace '<Version>.*?</Version>', '<Version>${{ inputs.ver }}</Version>'
+        $content = $content -replace '<AssemblyVersion>.*?</AssemblyVersion>', '<AssemblyVersion>${{ inputs.ver }}.0</AssemblyVersion>'
+        $content = $content -replace '<FileVersion>.*?</FileVersion>', '<FileVersion>${{ inputs.ver }}</FileVersion>'
 
         # update the .csproj file with the release notes
-        sed -i "s/<PackageReleaseNotes>.*<\/PackageReleaseNotes>/<PackageReleaseNotes>${{ inputs.release-notes }}<\/PackageReleaseNotes>/" NetAF.Imaging/NetAF.Imaging.csproj
+        $content = $content -replace '<PackageReleaseNotes>.*?</PackageReleaseNotes>', '<PackageReleaseNotes>${{ inputs.release-notes }}</PackageReleaseNotes>'
+
+        Set-Content -Path $csprojPath -Value $content
 
     - name: Build
       run: dotnet build -c Release
 
     - name: Run tests with coverlet
-      run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=lcov
+      run: dotnet test /p:CollectCoverage=true /p:CoverletOutput=TestResults\ /p:CoverletOutputFormat=lcov
 
     - name: Tag the commit
       run: |
@@ -80,11 +86,11 @@ jobs:
 
     - name: Push NuGet package (GitHub)
       run: |
-        dotnet nuget push ./NetAF.Imaging/bin/Release/*.nupkg --api-key ${{ secrets.PAT }} --source https://nuget.pkg.github.com/benpollarduk/index.json
+        dotnet nuget push .\NetAF.Imaging\bin\Release\*.nupkg --api-key ${{ secrets.PAT }} --source https://nuget.pkg.github.com/benpollarduk/index.json
     
     - name: Push NuGet package (NuGet.org)
       run: |
-        dotnet nuget push ./NetAF.Imaging/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
+        dotnet nuget push .\NetAF.Imaging\bin\Release\*.nupkg --api-key ${{ secrets.NUGET_TOKEN }} --source https://api.nuget.org/v3/index.json
 
     - name: Create GitHub release
       uses: actions/create-release@v1
