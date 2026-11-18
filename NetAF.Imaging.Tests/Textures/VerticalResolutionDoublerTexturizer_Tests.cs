@@ -7,19 +7,19 @@ namespace NetAF.Imaging.Tests.Textures
     public class VerticalResolutionDoublerTexturizer_Tests
     {
         [TestMethod]
-        public void GivenBlackCenterWhitePerimiter_WhenGetTextureCharacter_ThenReturnUpperHalfBlock()
+        public void GivenBlackCenterBrightWhitePerimiter_WhenGetTextureCharacter_ThenReturnUpperHalfBlock()
         {
             var kernel = new Kernel
             (
-                AnsiColor.White,
-                AnsiColor.White,
-                AnsiColor.White,
-                AnsiColor.White,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
                 AnsiColor.Black,
-                AnsiColor.White,
-                AnsiColor.White,
-                AnsiColor.White,
-                AnsiColor.White
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite
             );
             var texturizer = new VerticalResolutionDoublerTexturizer();
 
@@ -29,25 +29,27 @@ namespace NetAF.Imaging.Tests.Textures
         }
 
         [TestMethod]
-        public void GivenBlackCenterWhitePerimiter_WhenGetHighlightColor_ThenReturnGrey()
+        public void GivenBlackCenterBrightWhitePerimiter_WhenGetHighlightColor_ThenReturnGrey()
         {
             var kernel = new Kernel
             (
-                AnsiColor.White,
-                AnsiColor.White,
-                AnsiColor.White,
-                AnsiColor.White,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
                 AnsiColor.Black,
-                AnsiColor.White,
-                AnsiColor.White,
-                AnsiColor.White,
-                AnsiColor.White
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite,
+                AnsiColor.BrightWhite
             );
             var texturizer = new VerticalResolutionDoublerTexturizer();
 
-            var result = texturizer.GetTextureCharacter(kernel);
+            var result = texturizer.GetHighlightColor(kernel);
 
-            Assert.AreEqual('\u2584', result);
+            Assert.AreEqual(127, result.R);
+            Assert.AreEqual(127, result.G);
+            Assert.AreEqual(127, result.B);
         }
     }
 }
