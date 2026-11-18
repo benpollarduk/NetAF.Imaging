@@ -26,29 +26,21 @@ namespace NetAF.Imaging.Textures
 
         #region Implementation of ITexturizer
 
-        /// <summary>
-        /// Get a texture character for a color.
-        /// </summary>
-        /// <param name="color">The color to get the texture for.</param>
-        /// <returns>The texture character.</returns>
-        public char GetTextureCharacter(AnsiColor color)
+        /// <inheritdoc/>
+        public char GetTextureCharacter(Kernel kernel)
         {
-            var brightness = (color.R + color.G + color.B) / 3d;
+            var brightness = (kernel.MiddleCenter.R + kernel.MiddleCenter.G + kernel.MiddleCenter.B) / 3d;
             var normalisedBrightness = 1d / byte.MaxValue * brightness;
             int index = (int)((texture.Length - 1) * normalisedBrightness);
             return texture[index];
         }
 
-        /// <summary>
-        /// Get a highlight color for a background color.
-        /// </summary>
-        /// <param name="color">The background color.</param>
-        /// <returns>The highlight color.</returns>
-        public AnsiColor GetHighlightColor(AnsiColor color)
+        /// <inheritdoc/>
+        public AnsiColor GetHighlightColor(Kernel kernel)
         {
-            var r = color.R + highlightStrength;
-            var g = color.G + highlightStrength;
-            var b = color.B + highlightStrength;
+            var r = kernel.MiddleCenter.R + highlightStrength;
+            var g = kernel.MiddleCenter.G + highlightStrength;
+            var b = kernel.MiddleCenter.B + highlightStrength;
 
             return new AnsiColor(r.ClampToByte(),  g.ClampToByte(), b.ClampToByte());
         }

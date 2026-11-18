@@ -10,14 +10,14 @@ namespace NetAF.Imaging.Textures
         /// <summary>
         /// Get a texture character for a color.
         /// </summary>
-        /// <param name="color">The color to get the texture for.</param>
+        /// <param name="kernel">The 3x3 kernel of colors to get the texture for.</param>
         /// <returns>The texture character.</returns>
-        char GetTextureCharacter(AnsiColor color);
+        char GetTextureCharacter(Kernel kernel);
         /// <summary>
         /// Get a highlight color for a background color.
         /// </summary>
-        /// <param name="color">The background color.</param>
+        /// <param name="kernel">The 3x3 kernel of background colors.</param>
         /// <returns>The highlight color.</returns>
-        AnsiColor GetHighlightColor(AnsiColor color);
+        AnsiColor GetHighlightColor(Kernel kernel);
     }
 }

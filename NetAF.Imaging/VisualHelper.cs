@@ -1,6 +1,7 @@
 ﻿using NetAF.Imaging.Textures;
 using NetAF.Targets.Console.Rendering;
 using SkiaSharp;
+using System.Data.Common;
 
 namespace NetAF.Imaging
 {
@@ -60,19 +61,48 @@ namespace NetAF.Imaging
             GridVisualBuilder builder = new(AnsiColor.Black, AnsiColor.White);
             builder.Resize(ratioCorrectedTargetSize);
 
+            AnsiColor[,] ansiImage = new AnsiColor[ratioCorrectedTargetSize.Width, ratioCorrectedTargetSize.Height];
+
+            // firstly create the image in ANSI
             for (var y = 0; y < ratioCorrectedTargetSize.Height; y++)
             {
                 for (var x = 0; x < ratioCorrectedTargetSize.Width; x++)
                 {
                     SKColor pixel = resized.GetPixel(x, y);
-
-                    // account for alpha when assigning background color
                     var normalisedAlpha = 1d / byte.MaxValue * pixel.Alpha;
-                    var background = new AnsiColor((byte)(pixel.Red * normalisedAlpha), (byte)(pixel.Green * normalisedAlpha), (byte)(pixel.Blue * normalisedAlpha));
-                    builder.SetCell(x, y, background);
+                    ansiImage[x, y] = new AnsiColor((byte)(pixel.Red * normalisedAlpha), (byte)(pixel.Green * normalisedAlpha), (byte)(pixel.Blue * normalisedAlpha));
+                }
+            }
+
+            // now texturize the target image
+            for (var y = 0; y < ratioCorrectedTargetSize.Height; y++)
+            {
+                for (var x = 0; x < ratioCorrectedTargetSize.Width; x++)
+                {
+                    AnsiColor getColor(int column, int row, AnsiColor fallback)
+                    {
+                        if (column < 0 || column >= ratioCorrectedTargetSize.Width || row < 0 || row >= ratioCorrectedTargetSize.Height)
+                            return fallback;
+
+                        return ansiImage[column, row];
+                    }
+
+                    // get the central color, also the fallback for the edge of the image when getting colors
+                    var central = ansiImage[x, y];
+
+                    // create the kernel
+                    var kernel = new Kernel
+                    (
+                        getColor(x - 1, y - 1, central), getColor(x, y - 1, central), getColor(x + 1, y - 1, central),
+                        getColor(x - 1, y, central), central, getColor(x + 1, y, central),
+                        getColor(x - 1, y + 1, central), getColor(x, y + 1, central), getColor(x + 1, y + 1, central)
+                    );
+
+                    // set the cell to the central color
+                    builder.SetCell(x, y, kernel.MiddleCenter);
 
                     // apply texture
-                    builder.SetCell(x, y, texturizer.GetTextureCharacter(background), texturizer.GetHighlightColor(background));
+                    builder.SetCell(x, y, texturizer.GetTextureCharacter(kernel), texturizer.GetHighlightColor(kernel));
                 }
             }
 

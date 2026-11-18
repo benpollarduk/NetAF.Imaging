@@ -18,24 +18,16 @@ namespace NetAF.Imaging.Textures
 
         #region Implementation of ITexturizer
 
-        /// <summary>
-        /// Get a texture character for a color.
-        /// </summary>
-        /// <param name="color">The color to get the texture for.</param>
-        /// <returns>The texture character.</returns>
-        public char GetTextureCharacter(AnsiColor color)
+        /// <inheritdoc/>
+        public char GetTextureCharacter(Kernel kernel)
         {
             return Null;
         }
 
-        /// <summary>
-        /// Get a highlight color for a background color.
-        /// </summary>
-        /// <param name="color">The background color.</param>
-        /// <returns>The highlight color.</returns>
-        public AnsiColor GetHighlightColor(AnsiColor color)
+        /// <inheritdoc/>
+        public AnsiColor GetHighlightColor(Kernel kernel)
         {
-            return color;
+            return kernel.MiddleCenter;
         }
 
         #endregion

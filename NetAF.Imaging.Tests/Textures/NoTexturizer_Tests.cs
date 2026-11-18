@@ -1,7 +1,7 @@
 using NetAF.Imaging.Textures;
 using NetAF.Targets.Console.Rendering;
 
-namespace NetAF.Imaging.Tests
+namespace NetAF.Imaging.Tests.Textures
 {
     [TestClass]
     public class NoTexturizer_Tests
@@ -9,9 +9,9 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenBlack_WhenGetTextureCharacter_ThenReturnNullCharacter()
         {
-            var noTexturizer = new NoTexturizer();
+            var texturizer = new NoTexturizer();
 
-            var result = noTexturizer.GetTextureCharacter(AnsiColor.Black);
+            var result = texturizer.GetTextureCharacter(Kernel.FromColor(AnsiColor.Black));
 
             Assert.AreEqual((char)0, result);
         }
@@ -19,9 +19,9 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenBlack_WhenGetHighlightColor_ThenReturnBlack()
         {
-            var noTexturizer = new NoTexturizer();
+            var texturizer = new NoTexturizer();
 
-            var result = noTexturizer.GetHighlightColor(AnsiColor.Black);
+            var result = texturizer.GetHighlightColor(Kernel.FromColor(AnsiColor.Black));
 
             Assert.AreEqual(AnsiColor.Black, result);
         }

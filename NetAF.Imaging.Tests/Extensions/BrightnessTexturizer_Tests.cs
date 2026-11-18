@@ -1,6 +1,6 @@
 using NetAF.Imaging.Extensions;
 
-namespace NetAF.Imaging.Tests
+namespace NetAF.Imaging.Tests.Extensions
 {
     [TestClass]
     public class IntExtensions_Tests

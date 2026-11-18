@@ -59,6 +59,7 @@
                     <select @bind="selectedTexturizer" class="tool-select full-width">
                         <option value="@TexturizerOption.None">None</option>
                         <option value="@TexturizerOption.Brightness">Brightness</option>
+                        <option value="@TexturizerOption.VerticalResolutionDoubler">Vertical Resolution Doubler</option>
                     </select>
                 </div>
                 <label class="btn btn-outline-primary btn-sm load-image-btn full-width">
@@ -261,7 +262,8 @@
     private enum TexturizerOption
     {
         None,
-        Brightness
+        Brightness,
+        VerticalResolutionDoubler
     }
 
     private enum AspectRatioOption
@@ -414,6 +416,7 @@
     private ITexturizer CreateTexturizer() => selectedTexturizer switch
     {
         TexturizerOption.Brightness => new BrightnessTexturizer(),
+        TexturizerOption.VerticalResolutionDoubler => new VerticalResolutionDoublerTexturizer(),
         _ => new NoTexturizer()
     };
 

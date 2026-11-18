@@ -1,7 +1,7 @@
 using NetAF.Imaging.Textures;
 using NetAF.Targets.Console.Rendering;
 
-namespace NetAF.Imaging.Tests
+namespace NetAF.Imaging.Tests.Textures
 {
     [TestClass]
     public class BrightnessTexturizer_Tests
@@ -9,9 +9,9 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenBlack_WhenGetTextureCharacter_ThenReturnDarkestCharacter()
         {
-            var brightnessTexturizer = new BrightnessTexturizer("#.");
+            var texturizer = new BrightnessTexturizer("#.");
 
-            var result = brightnessTexturizer.GetTextureCharacter(AnsiColor.Black);
+            var result = texturizer.GetTextureCharacter(Kernel.FromColor(AnsiColor.Black));
 
             Assert.AreEqual('#', result);
         }
@@ -19,9 +19,9 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenBrightWhite_WhenGetTextureCharacter_ThenReturnLightestCharacter()
         {
-            var brightnessTexturizer = new BrightnessTexturizer("#.");
+            var texturizer = new BrightnessTexturizer("#.");
 
-            var result = brightnessTexturizer.GetTextureCharacter(AnsiColor.BrightWhite);
+            var result = texturizer.GetTextureCharacter(Kernel.FromColor(AnsiColor.BrightWhite));
 
             Assert.AreEqual('.', result);
         }
@@ -29,9 +29,9 @@ namespace NetAF.Imaging.Tests
         [TestMethod]
         public void GivenBlackAndHighlightOf10_WhenGetHighlightColor_ThenHighlight10BrighterOnAllChannels()
         {
-            var brightnessTexturizer = new BrightnessTexturizer("#.", 10);
+            var texturizer = new BrightnessTexturizer("#.", 10);
 
-            var result = brightnessTexturizer.GetHighlightColor(AnsiColor.Black);
+            var result = texturizer.GetHighlightColor(Kernel.FromColor(AnsiColor.Black));
 
             Assert.AreEqual(10, result.R);
             Assert.AreEqual(10, result.G);
