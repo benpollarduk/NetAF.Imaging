@@ -94,5 +94,38 @@ namespace NetAF.Imaging.Tests
 
             Assert.IsNotNull(result);
         }
+
+        [TestMethod]
+        public void GivenFullWhiteImage_WhenTexturizeWithNoTexturizer_ThenBackgroundColorIsPreserved()
+        {
+            var path = "Images/FullWhite.bmp";
+            var source = VisualHelper.FromImage(path, new(5, 5), CellAspectRatio.Square, new NoTexturizer());
+
+            var result = VisualHelper.Texturize(source, new NoTexturizer());
+
+            Assert.AreEqual(AnsiColor.BrightWhite, result.GetCellBackgroundColor(0, 0));
+        }
+
+        [TestMethod]
+        public void GivenFullWhiteImage_WhenTexturizeWithNoTexturizer_ThenTextureCharacterIsNull()
+        {
+            var path = "Images/FullWhite.bmp";
+            var source = VisualHelper.FromImage(path, new(5, 5), CellAspectRatio.Square, new NoTexturizer());
+
+            var result = VisualHelper.Texturize(source, new NoTexturizer());
+
+            Assert.AreEqual((char)0, result.GetCharacter(0, 0));
+        }
+
+        [TestMethod]
+        public void GivenFullBlackImage_WhenTexturizeWithBrightnessTexturizer_ThenTextureCharacterApplied()
+        {
+            var path = "Images/FullBlack.bmp";
+            var source = VisualHelper.FromImage(path, new(5, 5), CellAspectRatio.Square, new NoTexturizer());
+
+            var result = VisualHelper.Texturize(source, new BrightnessTexturizer());
+
+            Assert.AreNotEqual((char)0, result.GetCharacter(0, 0));
+        }
     }
 }

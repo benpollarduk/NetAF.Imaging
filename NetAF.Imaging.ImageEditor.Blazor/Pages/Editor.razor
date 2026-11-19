@@ -54,14 +54,6 @@
 
             <section class="panel">
                 <h2 class="panel-title">Image</h2>
-                <div class="field">
-                    <label>Texturizer</label>
-                    <select @bind="selectedTexturizer" class="tool-select full-width">
-                        <option value="@TexturizerOption.None">None</option>
-                        <option value="@TexturizerOption.Brightness">Brightness</option>
-                        <option value="@TexturizerOption.VerticalResolutionDoubler">Vertical Resolution Doubler</option>
-                    </select>
-                </div>
                 <label class="btn btn-outline-primary btn-sm load-image-btn full-width">
                     Load from File
                     <InputFile OnChange="LoadImage" accept="image/*" style="display:none" />
@@ -71,6 +63,19 @@
                     <input type="text" placeholder="https://..." @bind="imageUrl" class="url-input full-width" />
                 </div>
                 <button class="btn btn-outline-primary btn-sm full-width" @onclick="LoadImageFromUrl">Load from URL</button>
+            </section>
+
+            <section class="panel">
+                <h2 class="panel-title">Texturize</h2>
+                <div class="field">
+                    <label>Texturizer</label>
+                    <select @bind="selectedTexturizer" class="tool-select full-width">
+                        <option value="@TexturizerOption.None">None</option>
+                        <option value="@TexturizerOption.Brightness">Brightness</option>
+                        <option value="@TexturizerOption.VerticalResolutionDoubler">Vertical Resolution Doubler</option>
+                    </select>
+                </div>
+                <button class="btn btn-outline-primary btn-sm full-width" @onclick="TexturizeGrid">Apply Texturizer</button>
             </section>
 
             <section class="panel">
@@ -97,11 +102,11 @@
                     <span class="palette-target-label">Apply to:</span>
                     <div class="palette-toggle">
                         <button type="button"
-                                class="@(paletteTarget == PaletteTarget.Foreground ? "active" : null)"
-                                @onclick="() => paletteTarget = PaletteTarget.Foreground">Foreground</button>
-                        <button type="button"
                                 class="@(paletteTarget == PaletteTarget.Background ? "active" : null)"
                                 @onclick="() => paletteTarget = PaletteTarget.Background">Background</button>
+                        <button type="button"
+                                class="@(paletteTarget == PaletteTarget.Foreground ? "active" : null)"
+                                @onclick="() => paletteTarget = PaletteTarget.Foreground">Foreground</button>
                     </div>
                 </div>
                 <div class="palette">
@@ -295,7 +300,7 @@
     private bool applyBackground = true;
     private bool applyForeground = true;
     private bool applyCharacter = true;
-    private PaletteTarget paletteTarget = PaletteTarget.Foreground;
+    private PaletteTarget paletteTarget = PaletteTarget.Background;
     private bool isDrawing;
     private List<List<Cell>> cells = new();
     private List<string> palette = new();
@@ -327,7 +332,7 @@
 
     private string imageUrl = string.Empty;
 
-    private ReplaceTarget replaceTarget = ReplaceTarget.Foreground;
+    private ReplaceTarget replaceTarget = ReplaceTarget.Background;
     private string replaceFromColor = "#000000";
     private string replaceFromChar = " ";
 
@@ -502,6 +507,24 @@
         cells = newCells;
 
         RebuildPalette();
+    }
+
+    private async Task TexturizeGrid()
+    {
+        parseError = null;
+
+        try
+        {
+            SaveUndoSnapshot();
+            var builder = BuildBuilderFromCells();
+            var texturized = VisualHelper.Texturize(builder, CreateTexturizer());
+            LoadFromBuilder(texturized);
+            await PushGridToCanvas();
+        }
+        catch (Exception ex)
+        {
+            parseError = $"Could not texturize grid: {ex.Message}";
+        }
     }
 
     private async Task ResizeGrid()
@@ -1016,6 +1039,14 @@
 
     private void SyncStringFromCells()
     {
+        var builder = BuildBuilderFromCells();
+
+        gridString = builder.ToString();
+        parseError = null;
+    }
+
+    private GridVisualBuilder BuildBuilderFromCells()
+    {
         var builder = new GridVisualBuilder(AnsiColor.Black, AnsiColor.White);
         builder.Resize(new Size(width, height));
 
@@ -1029,8 +1060,7 @@
             }
         }
 
-        gridString = builder.ToString();
-        parseError = null;
+        return builder;
     }
 
     private async Task OnStringChanged(ChangeEventArgs e)

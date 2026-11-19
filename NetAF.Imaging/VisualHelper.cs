@@ -1,7 +1,7 @@
-﻿using NetAF.Imaging.Textures;
+﻿using NetAF.Assets;
+using NetAF.Imaging.Textures;
 using NetAF.Targets.Console.Rendering;
 using SkiaSharp;
-using System.Data.Common;
 
 namespace NetAF.Imaging
 {
@@ -52,7 +52,7 @@ namespace NetAF.Imaging
         {
             // the ratio of the cells used to display the pixels may not be square, image may need to be adjusted to accommodate this.
             // when it is rendered the natural stretching of the target will correct this
-            Assets.Size ratioCorrectedTargetSize = new((int)(targetSize.Width * cellAspectRatio.HeightRatio), (int)(targetSize.Height * cellAspectRatio.WidthRatio));
+            var ratioCorrectedTargetSize = new Size((int)(targetSize.Width * cellAspectRatio.HeightRatio), (int)(targetSize.Height * cellAspectRatio.WidthRatio));
 
             // resize the image to match the target size so that pixels in the image match 1:1 with the target
             using var resized = image.Resize(new SKImageInfo(ratioCorrectedTargetSize.Width, ratioCorrectedTargetSize.Height), SKSamplingOptions.Default);
@@ -98,11 +98,8 @@ namespace NetAF.Imaging
                         getColor(x - 1, y + 1, central), getColor(x, y + 1, central), getColor(x + 1, y + 1, central)
                     );
 
-                    // set the cell to the central color
-                    builder.SetCell(x, y, kernel.MiddleCenter);
-
                     // apply texture
-                    builder.SetCell(x, y, texturizer.GetTextureCharacter(kernel), texturizer.GetHighlightColor(kernel));
+                    builder.SetCell(x, y, texturizer.GetTextureCharacter(kernel), texturizer.GetHighlightColor(kernel), kernel.MiddleCenter);
                 }
             }
 
@@ -133,6 +130,52 @@ namespace NetAF.Imaging
         public static GridVisualFrame CreateFrame(Stream stream, Assets.Size targetSize, CellAspectRatio cellAspectRatio, ITexturizer texturizer)
         {
             return new GridVisualFrame(FromImage(stream, targetSize, cellAspectRatio, texturizer));
+        }
+
+        /// <summary>
+        /// Texturize a frame. 
+        /// </summary>
+        /// <param name="builder">The builder to texturize.</param>
+        /// <param name="texturizer">The texturizer.</param>
+        /// <returns>The texturized builder.</returns>
+        public static GridVisualBuilder Texturize(GridVisualBuilder builder, ITexturizer texturizer)
+        {
+            var size = builder.DisplaySize;
+
+            // the builder will be used to display the image
+            GridVisualBuilder newBuilder = new(AnsiColor.Black, AnsiColor.White);
+            newBuilder.Resize(size);
+
+            // now texturize the target image
+            for (var y = 0; y < size.Height; y++)
+            {
+                for (var x = 0; x < size.Width; x++)
+                {
+                    AnsiColor getColor(int column, int row, AnsiColor fallback)
+                    {
+                        if (column < 0 || column >= size.Width || row < 0 || row >= size.Height)
+                            return fallback;
+
+                        return builder.GetCellBackgroundColor(column, row);
+                    }
+
+                    // get the central color, also the fallback for the edge of the image when getting colors
+                    var central = builder.GetCellBackgroundColor(x, y);
+
+                    // create the kernel
+                    var kernel = new Kernel
+                    (
+                        getColor(x - 1, y - 1, central), getColor(x, y - 1, central), getColor(x + 1, y - 1, central),
+                        getColor(x - 1, y, central), central, getColor(x + 1, y, central),
+                        getColor(x - 1, y + 1, central), getColor(x, y + 1, central), getColor(x + 1, y + 1, central)
+                    );
+
+                    // apply texture
+                    newBuilder.SetCell(x, y, texturizer.GetTextureCharacter(kernel), texturizer.GetHighlightColor(kernel), kernel.MiddleCenter);
+                }
+            }
+
+            return newBuilder;
         }
 
         #endregion;
