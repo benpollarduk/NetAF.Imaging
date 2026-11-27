@@ -25,7 +25,7 @@ namespace NetAF.Imaging.Tests.Textures
 
             var result = texturizer.GetTextureCharacter(kernel);
 
-            Assert.AreEqual('\u2584', result);
+            Assert.AreEqual('\u2580', result);
         }
 
         [TestMethod]
