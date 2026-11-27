@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NetAF.Imaging.ImageEditor.Blazor</title>
     <base href="/NetAF.Imaging/" />
-    <link href="_framework/dotnet.ymvomfmbkq.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-KkjpYazd8ZBs19VGo+1kPFmvwvBU4eBjA1gMDTPAGJE=" />
+    <link href="_framework/dotnet.i8iuvvzswf.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-Lr0bJ2nlKYL+RhMHOQVhlca4ddJKMqNFJyvQqeAEj04=" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="icon.png" />
@@ -17,20 +17,20 @@
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.w3qd1tpl0e.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.i8iuvvzswf.js",
     "./_framework/dotnet.native.js": "./_framework/dotnet.native.qm0ly00wu6.js",
-    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.v2rwe8u38b.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.ymvomfmbkq.js"
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.v2rwe8u38b.js"
   },
   "scopes": {},
   "integrity": {
     "./_framework/blazor.webassembly.js": "sha256-lDXsDYFgm62F+YUvxES7IOTCXYpiHpU3uR45YdC6mq4=",
     "./_framework/blazor.webassembly.w3qd1tpl0e.js": "sha256-lDXsDYFgm62F+YUvxES7IOTCXYpiHpU3uR45YdC6mq4=",
-    "./_framework/dotnet.js": "sha256-KkjpYazd8ZBs19VGo+1kPFmvwvBU4eBjA1gMDTPAGJE=",
+    "./_framework/dotnet.i8iuvvzswf.js": "sha256-Lr0bJ2nlKYL+RhMHOQVhlca4ddJKMqNFJyvQqeAEj04=",
+    "./_framework/dotnet.js": "sha256-Lr0bJ2nlKYL+RhMHOQVhlca4ddJKMqNFJyvQqeAEj04=",
     "./_framework/dotnet.native.js": "sha256-jqe7Nj08fafCkO3FyUeadI7V+0UYDMA1jbO2Txfjt7o=",
     "./_framework/dotnet.native.qm0ly00wu6.js": "sha256-jqe7Nj08fafCkO3FyUeadI7V+0UYDMA1jbO2Txfjt7o=",
     "./_framework/dotnet.runtime.js": "sha256-6SBqDbLLy460Bxd7wMZoiO97hZfLTuF+HRhWT3elS7U=",
-    "./_framework/dotnet.runtime.v2rwe8u38b.js": "sha256-6SBqDbLLy460Bxd7wMZoiO97hZfLTuF+HRhWT3elS7U=",
-    "./_framework/dotnet.ymvomfmbkq.js": "sha256-KkjpYazd8ZBs19VGo+1kPFmvwvBU4eBjA1gMDTPAGJE="
+    "./_framework/dotnet.runtime.v2rwe8u38b.js": "sha256-6SBqDbLLy460Bxd7wMZoiO97hZfLTuF+HRhWT3elS7U="
   }
 }</script>
 </head>
@@ -185,8 +185,8 @@
                 if (ch >= 7 * dpr && state.chars) {
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    const fontPx = Math.floor(ch * 0.8);
-                    ctx.font = fontPx + "px 'Times New Roman', serif";
+                    const fontPx = Math.floor(Math.min(ch * 0.8, cw * 0.9));
+                    ctx.font = fontPx + "px Consolas, 'Courier New', monospace";
                     for (let r = r0; r < r1; r++) {
                         for (let c = c0; c < c1; c++) {
                             const i = r * state.cols + c;
