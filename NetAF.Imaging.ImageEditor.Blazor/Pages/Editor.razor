@@ -611,9 +611,9 @@
     {
         var cell = cells[row][col];
         if (applyForeground)
-            foreground = cell.Foreground;
+            foreground = NormalizeHexColor(cell.Foreground, "#ffffff");
         if (applyBackground)
-            background = cell.Background;
+            background = NormalizeHexColor(cell.Background, "#000000");
         if (applyCharacter)
             brushChar = cell.Character;
     }
@@ -836,9 +836,9 @@
     private void ApplyChannels(Cell cell)
     {
         if (applyForeground)
-            cell.Foreground = foreground;
+            cell.Foreground = NormalizeHexColor(foreground, "#ffffff");
         if (applyBackground)
-            cell.Background = background;
+            cell.Background = NormalizeHexColor(background, "#000000");
         if (applyCharacter)
             cell.Character = string.IsNullOrEmpty(brushChar) ? " " : brushChar;
     }
@@ -975,9 +975,9 @@
     {
         // apply the clicked color to whichever channel the toggle targets.
         if (paletteTarget == PaletteTarget.Background)
-            background = color;
+            background = NormalizeHexColor(color, "#000000");
         else
-            foreground = color;
+            foreground = NormalizeHexColor(color, "#ffffff");
     }
 
     private void ReplaceAll()
@@ -1018,8 +1018,8 @@
         {
             foreach (var cell in row)
             {
-                set.Add(cell.Foreground);
-                set.Add(cell.Background);
+                set.Add(NormalizeHexColor(cell.Foreground, "#ffffff"));
+                set.Add(NormalizeHexColor(cell.Background, "#000000"));
                 if (set.Count >= 100)
                     break;
             }
@@ -1129,5 +1129,29 @@
     private static string AnsiToHex(AnsiColor color)
     {
         return $"#{color.R:x2}{color.G:x2}{color.B:x2}";
+    }
+
+    private static string NormalizeHexColor(string? color, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+            return fallback;
+
+        var value = color.Trim().TrimStart('#');
+
+        if (value.Length == 3)
+            value = string.Concat(value[0], value[0], value[1], value[1], value[2], value[2]);
+
+        if (value.Length < 6)
+            return fallback;
+
+        value = value[..6];
+
+        foreach (var c in value)
+        {
+            if (!Uri.IsHexDigit(c))
+                return fallback;
+        }
+
+        return $"#{value.ToLowerInvariant()}";
     }
 }

@@ -167,8 +167,8 @@
                 if (ch >= 7 * dpr && state.chars) {
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    const fontPx = Math.floor(ch * 0.8);
-                    ctx.font = fontPx + "px 'Times New Roman', serif";
+                    const fontPx = Math.floor(Math.min(ch * 0.8, cw * 0.9));
+                    ctx.font = fontPx + "px Consolas, 'Courier New', monospace";
                     for (let r = r0; r < r1; r++) {
                         for (let c = c0; c < c1; c++) {
                             const i = r * state.cols + c;

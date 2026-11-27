@@ -13,7 +13,7 @@ namespace NetAF.Imaging.Textures
         /// <summary>
         /// Get the upper half block caharcter.
         /// </summary>
-        private const char UpperHalfBlock = '\u2584';
+        private const char UpperHalfBlock = '\u2580';
 
         #endregion
 
